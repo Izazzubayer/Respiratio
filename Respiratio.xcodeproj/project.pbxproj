@@ -29,9 +29,22 @@
 		82B0FE762E56350B00EF7760 /* RespiratioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RespiratioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		82B0FEC32E571D0500EF7760 /* Exceptions for "Respiratio" folder in "Respiratio" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Untitled.swift,
+			);
+			target = 82B0FE5D2E56350900EF7760 /* Respiratio */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		82B0FE602E56350900EF7760 /* Respiratio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				82B0FEC32E571D0500EF7760 /* Exceptions for "Respiratio" folder in "Respiratio" target */,
+			);
 			path = Respiratio;
 			sourceTree = "<group>";
 		};
@@ -391,6 +404,7 @@
 				CODE_SIGN_ENTITLEMENTS = Respiratio/Respiratio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -428,6 +442,7 @@
 				CODE_SIGN_ENTITLEMENTS = Respiratio/Respiratio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
