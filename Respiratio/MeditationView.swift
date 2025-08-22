@@ -137,6 +137,45 @@ private struct SectionHeader: View {
 
 // MARK: - Preview
 
-#Preview {
+#Preview("Meditation View - iPhone") {
     MeditationView()
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro")
+}
+
+#Preview("Meditation View - iPhone Dark") {
+    MeditationView()
+        .preferredColorScheme(.dark)
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro - Dark Mode")
+}
+
+#Preview("Meditation View - iPad") {
+    MeditationView()
+        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
+        .previewDisplayName("iPad Pro")
+}
+
+#Preview("Meditation Row Component") {
+    NavigationStack {
+        List {
+            MeditationRow(preset: quickMeditations[0])
+            MeditationRow(preset: quickMeditations[2])
+            MeditationRow(preset: quickMeditations[4])
+        }
+        .listStyle(.insetGrouped)
+    }
+    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+    .previewDisplayName("Meditation Row Components")
+}
+
+#Preview("Level Badge Components") {
+    VStack(spacing: 20) {
+        ForEach(MeditationPreset.Level.allCases, id: \.self) { level in
+            LevelBadge(level: level)
+        }
+    }
+    .padding()
+    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+    .previewDisplayName("Level Badge Components")
 }

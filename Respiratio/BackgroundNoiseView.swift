@@ -94,3 +94,36 @@ extension BackgroundNoise {
         }
     }
 }
+
+// MARK: - Preview
+
+#Preview("Background Noise View - iPhone") {
+    BackgroundNoiseView()
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro")
+}
+
+#Preview("Background Noise View - iPhone Dark") {
+    BackgroundNoiseView()
+        .preferredColorScheme(.dark)
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro - Dark Mode")
+}
+
+#Preview("Background Noise View - iPad") {
+    BackgroundNoiseView()
+        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
+        .previewDisplayName("iPad Pro")
+}
+
+#Preview("Noise Row Components") {
+    List {
+        ForEach(NoiseCatalog.all.prefix(3), id: \.self) { noise in
+            NoiseRow(noise: noise)
+                .padding(.vertical, 6)
+        }
+    }
+    .listStyle(.insetGrouped)
+    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+    .previewDisplayName("Noise Row Components")
+}

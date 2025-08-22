@@ -86,3 +86,37 @@ private struct BreathingRowCard: View {
         .contentShape(Rectangle()) // whole card tappable
     }
 }
+
+// MARK: - Preview
+
+#Preview("Breathing View - iPhone") {
+    BreathingView()
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro")
+}
+
+#Preview("Breathing View - iPhone Dark") {
+    BreathingView()
+        .preferredColorScheme(.dark)
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+        .previewDisplayName("iPhone 16 Pro - Dark Mode")
+}
+
+#Preview("Breathing View - iPad") {
+    BreathingView()
+        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
+        .previewDisplayName("iPad Pro")
+}
+
+#Preview("Breathing Card Components") {
+    ScrollView {
+        VStack(spacing: 14) {
+            ForEach(BreathingExercise.all) { exercise in
+                BreathingRowCard(exercise: exercise)
+            }
+        }
+        .padding(20)
+    }
+    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
+    .previewDisplayName("Breathing Card Components")
+}
