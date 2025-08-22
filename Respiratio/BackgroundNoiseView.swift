@@ -1,66 +1,96 @@
-//
-//  BackgroundNoiseView.swift
-//  Respiratio
-//
-//  Created by Izzy Drizzy on 2025-08-21.
-//
 import SwiftUI
-import AVFoundation
 
+/// Top-level list of background noises.
 struct BackgroundNoiseView: View {
-    @State private var audioPlayer: AVAudioPlayer?
-    @State private var selectedNoise: BackgroundNoise? = nil
-    @State private var isPlaying = false
-    @State private var timerMinutes: Double = 20
-    @State private var repeatEnabled = false
-    @State private var countdownTimer: Timer?
-    @State private var timeRemaining: Int = 0
+    // Plug in your catalog/source of noises
+    private let noises: [BackgroundNoise] = NoiseCatalog.all
 
     var body: some View {
-        NavigationView {
-            List(backgroundNoises) { noise in
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(noise.name)
-                        .font(.headline)
-                    Text(noise.description)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    // Tags
-                    HStack {
-                        ForEach(noise.tags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption)
-                                .padding(5)
-                                .background(Color.blue.opacity(0.2))
-                                .cornerRadius(5)
-                        }
+        NavigationStack {
+            List {
+                ForEach(noises, id: \.self) { noise in
+                    NavigationLink(value: noise) {
+                        NoiseRow(noise: noise)
+                            .padding(.vertical, 6)
                     }
                 }
-                .padding(.vertical, 5)
-                .onTapGesture {
-                    selectedNoise = noise
-                    playSound(noise)
-                }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Background Noise")
-            .sheet(item: $selectedNoise) { noise in
-                NoisePlayerView(noise: noise)
+            // Push the full player page
+            .navigationDestination(for: BackgroundNoise.self) { noise in
+                NoiseSessionView(noise: noise)
             }
         }
     }
+}
 
-    func playSound(_ noise: BackgroundNoise) {
-        do {
-            guard let url = Bundle.main.url(forResource: noise.filename, withExtension: "wav") else {
-                print("File not found")
-                return
+/// A single row with icon + title + description + tags (Apple-style).
+private struct NoiseRow: View {
+    let noise: BackgroundNoise
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Icon
+            Image(systemName: noise.icon)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(noise.tint)
+
+            // Texts
+            VStack(alignment: .leading, spacing: 8) {
+                Text(noise.title)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                if !noise.summary.isEmpty {
+                    Text(noise.summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if !noise.tags.isEmpty {
+                    HStack(spacing: 8) {
+                        ForEach(noise.tags, id: \.self) { tag in
+                            Text(tag.capitalized)
+                                .font(.caption.weight(.medium))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 10)
+                                .background(Capsule().fill(noise.tint.opacity(0.12)))
+                                .foregroundStyle(noise.tint)
+                        }
+                    }
+                    .padding(.top, 2)
+                }
             }
-            audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.numberOfLoops = repeatEnabled ? -1 : 0
-            audioPlayer?.play()
-            isPlaying = true
-        } catch {
-            print("Error: \(error.localizedDescription)")
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(noise.title). \(noise.summary)")
+    }
+}
+
+// MARK: - Icon / Tint helpers for the list
+extension BackgroundNoise {
+    /// SF Symbol to use for each noise in the list.
+    var icon: String {
+        switch title {
+        case "White Noise": return "waveform"
+        case "Brown Noise": return "drop.fill"
+        case "Theta Wave": return "circle.grid.cross"
+        case "Beta Wave":  return "bolt.circle.fill"
+        default:            return "music.note"
+        }
+    }
+    
+    /// Subtle, consistent tint per noise.
+    var tint: Color {
+        switch title {
+        case "White Noise": return .blue
+        case "Brown Noise": return .brown
+        case "Theta Wave":  return .purple
+        case "Beta Wave":   return .yellow
+        default:            return .blue
         }
     }
 }

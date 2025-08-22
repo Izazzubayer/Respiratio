@@ -116,3 +116,14 @@ Package.resolved
 *.mobileprovision
 *.xcconfig.local
 Secrets.plist
+.DS_Store
+.build/
+DerivedData/
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+Pods/
+Carthage/Build
+.swiftpm/
+

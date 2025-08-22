@@ -6,7 +6,20 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		826D986F2E58E75200E4461A /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D986E2E58E75200E4461A /* WidgetKit.framework */; };
+		826D98712E58E75200E4461A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D98702E58E75200E4461A /* SwiftUI.framework */; };
+		826D98822E58E75400E4461A /* NoiseLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		826D98802E58E75400E4461A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 82B0FE562E56350900EF7760 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 826D986B2E58E75100E4461A;
+			remoteInfo = NoiseLiveActivityExtension;
+		};
 		82B0FE6D2E56350B00EF7760 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 82B0FE562E56350900EF7760 /* Project object */;
@@ -23,27 +36,67 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		826D98872E58E75400E4461A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				826D98822E58E75400E4461A /* NoiseLiveActivityExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoiseLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		826D986E2E58E75200E4461A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		826D98702E58E75200E4461A /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		82B0FE5E2E56350900EF7760 /* Respiratio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Respiratio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		82B0FE6C2E56350B00EF7760 /* RespiratioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RespiratioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		82B0FE762E56350B00EF7760 /* RespiratioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RespiratioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		82B0FEC32E571D0500EF7760 /* Exceptions for "Respiratio" folder in "Respiratio" target */ = {
+		826D98832E58E75400E4461A /* Exceptions for "NoiseLiveActivity" folder in "NoiseLiveActivityExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Untitled.swift,
+				Info.plist,
+			);
+			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
+		};
+		826D98892E58E9A400E4461A /* Exceptions for "Respiratio" folder in "NoiseLiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NoiseActivityAttributes.swift,
+			);
+			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
+		};
+		826D988B2E58FD4300E4461A /* Exceptions for "Respiratio" folder in "Respiratio" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
 			);
 			target = 82B0FE5D2E56350900EF7760 /* Respiratio */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		826D98722E58E75200E4461A /* NoiseLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				826D98832E58E75400E4461A /* Exceptions for "NoiseLiveActivity" folder in "NoiseLiveActivityExtension" target */,
+			);
+			path = NoiseLiveActivity;
+			sourceTree = "<group>";
+		};
 		82B0FE602E56350900EF7760 /* Respiratio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				82B0FEC32E571D0500EF7760 /* Exceptions for "Respiratio" folder in "Respiratio" target */,
+				826D988B2E58FD4300E4461A /* Exceptions for "Respiratio" folder in "Respiratio" target */,
+				826D98892E58E9A400E4461A /* Exceptions for "Respiratio" folder in "NoiseLiveActivityExtension" target */,
 			);
 			path = Respiratio;
 			sourceTree = "<group>";
@@ -61,6 +114,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		826D98692E58E75100E4461A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				826D98712E58E75200E4461A /* SwiftUI.framework in Frameworks */,
+				826D986F2E58E75200E4461A /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		82B0FE5B2E56350900EF7760 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -85,12 +147,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		826D986D2E58E75200E4461A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				826D986E2E58E75200E4461A /* WidgetKit.framework */,
+				826D98702E58E75200E4461A /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		82B0FE552E56350900EF7760 = {
 			isa = PBXGroup;
 			children = (
 				82B0FE602E56350900EF7760 /* Respiratio */,
 				82B0FE6F2E56350B00EF7760 /* RespiratioTests */,
 				82B0FE792E56350B00EF7760 /* RespiratioUITests */,
+				826D98722E58E75200E4461A /* NoiseLiveActivity */,
+				826D986D2E58E75200E4461A /* Frameworks */,
 				82B0FE5F2E56350900EF7760 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +174,7 @@
 				82B0FE5E2E56350900EF7760 /* Respiratio.app */,
 				82B0FE6C2E56350B00EF7760 /* RespiratioTests.xctest */,
 				82B0FE762E56350B00EF7760 /* RespiratioUITests.xctest */,
+				826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,6 +182,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 826D98842E58E75400E4461A /* Build configuration list for PBXNativeTarget "NoiseLiveActivityExtension" */;
+			buildPhases = (
+				826D98682E58E75100E4461A /* Sources */,
+				826D98692E58E75100E4461A /* Frameworks */,
+				826D986A2E58E75100E4461A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				826D98722E58E75200E4461A /* NoiseLiveActivity */,
+			);
+			name = NoiseLiveActivityExtension;
+			packageProductDependencies = (
+			);
+			productName = NoiseLiveActivityExtension;
+			productReference = 826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		82B0FE5D2E56350900EF7760 /* Respiratio */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 82B0FE802E56350B00EF7760 /* Build configuration list for PBXNativeTarget "Respiratio" */;
@@ -115,10 +211,12 @@
 				82B0FE5A2E56350900EF7760 /* Sources */,
 				82B0FE5B2E56350900EF7760 /* Frameworks */,
 				82B0FE5C2E56350900EF7760 /* Resources */,
+				826D98872E58E75400E4461A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				826D98812E58E75400E4461A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				82B0FE602E56350900EF7760 /* Respiratio */,
@@ -186,6 +284,9 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					826D986B2E58E75100E4461A = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					82B0FE5D2E56350900EF7760 = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -216,11 +317,19 @@
 				82B0FE5D2E56350900EF7760 /* Respiratio */,
 				82B0FE6B2E56350B00EF7760 /* RespiratioTests */,
 				82B0FE752E56350B00EF7760 /* RespiratioUITests */,
+				826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		826D986A2E58E75100E4461A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		82B0FE5C2E56350900EF7760 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -245,6 +354,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		826D98682E58E75100E4461A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		82B0FE5A2E56350900EF7760 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -269,6 +385,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		826D98812E58E75400E4461A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
+			targetProxy = 826D98802E58E75400E4461A /* PBXContainerItemProxy */;
+		};
 		82B0FE6E2E56350B00EF7760 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 82B0FE5D2E56350900EF7760 /* Respiratio */;
@@ -282,6 +403,65 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		826D98852E58E75400E4461A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoiseLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoiseLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pixelmango.Respiratio.NoiseLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		826D98862E58E75400E4461A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoiseLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoiseLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pixelmango.Respiratio.NoiseLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		82B0FE7E2E56350B00EF7760 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -407,17 +587,22 @@
 				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Respiratio/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
@@ -425,7 +610,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.pixelmango.Respiratio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
+				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -445,17 +630,22 @@
 				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Respiratio/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
@@ -463,7 +653,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.pixelmango.Respiratio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
+				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -521,6 +711,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
@@ -542,6 +733,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4TSM53P2J3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
@@ -561,6 +753,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		826D98842E58E75400E4461A /* Build configuration list for PBXNativeTarget "NoiseLiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				826D98852E58E75400E4461A /* Debug */,
+				826D98862E58E75400E4461A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		82B0FE592E56350900EF7760 /* Build configuration list for PBXProject "Respiratio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

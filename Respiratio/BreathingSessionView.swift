@@ -1,51 +1,58 @@
-//
-//  BreathingSessionView.swift
-//  Respiratio
-//
-//  Created by Izzy Drizzy on 2025-08-21.
-//
-
 import SwiftUI
 import Combine
 import AVFoundation
+import CoreHaptics
 
-// MARK: - ViewModel (2 min total, pulsating only)
+// MARK: - ViewModel
+
 final class BreathingSessionModel: ObservableObject {
     let exercise: BreathingExercise
     let totalSeconds: Int
 
     @Published var remaining: Int
-    @Published var isRunning = false
+    @Published var isRunning = false        // starts paused
     @Published var finished = false
 
-    // phase
     @Published private(set) var phaseIndex = 0
     @Published private(set) var phaseRemaining: Int
 
     private var ticker: AnyCancellable?
+    private let haptics: HapticBreathEngine
 
     init(exercise: BreathingExercise, totalSeconds: Int = 120) {
         self.exercise = exercise
         self.totalSeconds = max(1, totalSeconds)
         self.remaining = self.totalSeconds
         self.phaseRemaining = exercise.cycle.first?.seconds ?? 1
+
+        switch exercise.title {
+        case BreathingExercise.box.title:            self.haptics = .init(technique: .box)
+        case BreathingExercise.equal.title:          self.haptics = .init(technique: .equal)
+        case BreathingExercise.fourSevenEight.title: self.haptics = .init(technique: .fourSevenEight)
+        case BreathingExercise.resonant.title:       self.haptics = .init(technique: .resonant)
+        case BreathingExercise.triangle.title:       self.haptics = .init(technique: .triangle)
+        default:                                     self.haptics = .init(technique: .equal)
+        }
     }
 
     var currentPhase: BreathPhase { exercise.cycle[phaseIndex] }
 
+    // User taps Play
     func start() {
         guard !isRunning && !finished else { return }
         isRunning = true
+        haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
         tick()
         ticker = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in self?.tick() }
     }
 
+    // User taps Pause
     func pause() {
         isRunning = false
-        ticker?.cancel()
-        ticker = nil
+        ticker?.cancel(); ticker = nil
+        haptics.stop()
     }
 
     func stop() { pause(); remaining = 0; finish() }
@@ -54,7 +61,6 @@ final class BreathingSessionModel: ObservableObject {
         guard isRunning else { return }
         remaining = max(remaining - 1, 0)
         phaseRemaining = max(phaseRemaining - 1, 0)
-
         if phaseRemaining == 0 { advancePhase() }
         if remaining == 0 { finish() }
     }
@@ -62,14 +68,7 @@ final class BreathingSessionModel: ObservableObject {
     private func advancePhase() {
         phaseIndex = (phaseIndex + 1) % exercise.cycle.count
         phaseRemaining = exercise.cycle[phaseIndex].seconds
-        #if os(iOS)
-        // subtle, intuitive haptics per phase
-        switch exercise.cycle[phaseIndex].kind {
-        case .inhale: UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        case .hold:   UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        case .exhale: UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-        }
-        #endif
+        haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
     }
 
     private func finish() {
@@ -81,9 +80,14 @@ final class BreathingSessionModel: ObservableObject {
             #endif
         }
     }
+
+    private func chPhase(_ k: BreathPhase.Kind) -> HapticBreathEngine.Phase {
+        switch k { case .inhale: return .inhale; case .hold: return .hold; case .exhale: return .exhale }
+    }
 }
 
-// MARK: - View (Apple‑style minimal)
+// MARK: - View
+
 struct BreathingSessionView: View {
     @StateObject private var model: BreathingSessionModel
     @Environment(\.dismiss) private var dismiss
@@ -95,8 +99,7 @@ struct BreathingSessionView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground),
-                                    Color(.secondarySystemBackground)],
+            LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             .ignoresSafeArea()
 
@@ -105,16 +108,16 @@ struct BreathingSessionView: View {
 
                 Spacer(minLength: 0)
 
-                // Single pulsating circle — no progress ring.
-                PulsatingCircle(
+                // Orb stays still until user presses Play
+                SyncedBreathOrb(
                     phase: model.currentPhase.kind,
                     phaseDuration: model.currentPhase.seconds,
                     secondsLeft: model.phaseRemaining,
-                    tint: model.exercise.tint
+                    tint: model.exercise.tint,
+                    isRunning: model.isRunning          // NEW: gate animations
                 )
                 .frame(width: 260, height: 260)
 
-                // Small phase chip + big time (readable)
                 VStack(spacing: 8) {
                     PhaseChip(kind: model.currentPhase.kind, tint: model.exercise.tint)
                     Text(timeString(model.remaining))
@@ -129,7 +132,7 @@ struct BreathingSessionView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
-            model.start()
+            // Do NOT auto-start; keep paused by default
             try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
         }
         .onDisappear {
@@ -145,7 +148,7 @@ struct BreathingSessionView: View {
         .safeAreaInset(edge: .bottom) {
             BottomControls(
                 isRunning: model.isRunning,
-                startPause: { model.isRunning ? model.pause() : model.start() },
+                startPause: { model.isRunning ? model.pause() : model.start() }, // shows Play initially
                 stop: { model.stop() },
                 tint: model.exercise.tint
             )
@@ -159,14 +162,24 @@ struct BreathingSessionView: View {
         }
     }
 
-    // Header with title, duration pill, and keep‑awake
     private var header: some View {
-        HStack(spacing: 12) {
-            Label(model.exercise.title, systemImage: "wind")
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "wind")
                 .font(.headline)
                 .foregroundStyle(.primary)
-                .lineLimit(1)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.exercise.title)
+                    .font(.headline)
+                // 👇 SHOW DESCRIPTION (1–3 lines)
+                Text(model.exercise.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+
             Spacer()
+
             HStack(spacing: 8) {
                 DurationPill(color: model.exercise.tint, minutes: model.totalSeconds / 60)
                 KeepAwakeToggle()
@@ -175,72 +188,82 @@ struct BreathingSessionView: View {
         .padding(.horizontal)
         .padding(.top, 8)
     }
-
+    
     private func timeString(_ s: Int) -> String {
         let m = s / 60, ss = s % 60
         return String(format: "%02d:%02d", m, ss)
     }
 }
 
-// MARK: - Components
+// MARK: - Synced visual (no outline, smooth/gradual)
 
-/// The only visual driver: expands (inhale) → steady (hold) → contracts (exhale)
-private struct PulsatingCircle: View {
+/// Matches Core Haptics strength. Stays static when paused.
+private struct SyncedBreathOrb: View {
     let phase: BreathPhase.Kind
     let phaseDuration: Int
     let secondsLeft: Int
     let tint: Color
+    let isRunning: Bool          // NEW
 
-    // progress 0→1 within current phase
     private var p: Double {
         guard phaseDuration > 0 else { return 0 }
-        return Double(phaseDuration - secondsLeft) / Double(phaseDuration)
+        let done = Double(phaseDuration - secondsLeft)
+        return min(max(done / Double(phaseDuration), 0), 1)
     }
 
-    // scale curve — gentle and readable
+    private var strength: Double {
+        switch phase {
+        case .inhale: return lerp(0.25, 1.00, p)
+        case .hold:   return 0.45
+        case .exhale: return lerp(1.00, 0.05, p)
+        }
+    }
+
     private var scale: CGFloat {
         switch phase {
-        case .inhale: return CGFloat(0.65 + 0.35 * p)       // 65% → 100%
-        case .hold:   return 1.0                             // steady
-        case .exhale: return CGFloat(0.65 + 0.35 * (1 - p))  // 100% → 65%
+        case .inhale: return CGFloat(lerp(0.65, 1.00, p))
+        case .hold:   return 1.00
+        case .exhale: return CGFloat(lerp(1.00, 0.65, p))
         }
     }
 
-    // subtle tint per phase (keeps things intuitive without words)
-    private var fill: Color {
-        switch phase {
-        case .inhale: return tint.opacity(0.28)
-        case .hold:   return tint.opacity(0.20)
-        case .exhale: return tint.opacity(0.28)
-        }
-    }
-    private var stroke: Color {
-        switch phase {
-        case .inhale: return tint.opacity(0.9)
-        case .hold:   return tint.opacity(0.55)
-        case .exhale: return tint.opacity(0.9)
-        }
-    }
+    private var innerOpacity: Double { lerp(0.28, 0.55, strength) }
+    private var outerOpacity: Double { lerp(0.14, 0.26, strength) }
+    private var glowRadius: CGFloat { CGFloat(lerp(8, 42, strength)) }
+    private var glowOpacity: Double { lerp(0.10, 0.42, strength) }
 
     var body: some View {
         Circle()
-            .fill(fill.gradient)
-            .overlay(Circle().stroke(stroke, lineWidth: 3))
+            .fill(
+                RadialGradient(
+                    colors: [tint.opacity(innerOpacity), tint.opacity(outerOpacity)],
+                    center: .center, startRadius: 2, endRadius: 140
+                )
+            )
             .scaleEffect(scale)
-            .animation(.easeInOut(duration: 0.9), value: secondsLeft)
+            // Only animate while running; static while paused.
+            .animation(isRunning ? .linear(duration: 0.95) : nil, value: secondsLeft)
+            .shadow(color: tint.opacity(glowOpacity), radius: glowRadius)
             .overlay(
-                Text("\(secondsLeft)")
+                Text("\(max(0, secondsLeft))")
                     .font(.title2.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(.primary)
             )
-            .accessibilityLabel("\(phaseLabel) \(secondsLeft) seconds remaining")
+            .accessibilityLabel(accessibilityText)
     }
 
-    private var phaseLabel: String {
-        switch phase { case .inhale: "Inhale"; case .hold: "Hold"; case .exhale: "Exhale" }
+    private var accessibilityText: String {
+        let name: String = {
+            switch phase { case .inhale: return "Inhale"; case .hold: return "Hold"; case .exhale: return "Exhale" }
+        }()
+        return "\(name) \(secondsLeft) seconds remaining"
     }
+
+    private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double { a + (b - a) * t }
 }
+
+// MARK: - Small components
 
 private struct PhaseChip: View {
     let kind: BreathPhase.Kind
@@ -248,9 +271,9 @@ private struct PhaseChip: View {
     var body: some View {
         let (text, icon): (String, String) = {
             switch kind {
-            case .inhale: return ("Inhale", "arrow.down.circle")   // down into lungs
+            case .inhale: return ("Inhale", "arrow.down.circle")
             case .hold:   return ("Hold",   "pause.circle")
-            case .exhale: return ("Exhale", "arrow.up.circle")     // up/out
+            case .exhale: return ("Exhale", "arrow.up.circle")
             }
         }()
         return Label(text, systemImage: icon)
@@ -259,7 +282,6 @@ private struct PhaseChip: View {
             .padding(.horizontal, 10)
             .background(Capsule().fill(tint.opacity(0.12)))
             .foregroundStyle(tint)
-            .accessibilityHidden(false)
     }
 }
 
@@ -284,7 +306,7 @@ private struct BottomControls: View {
     var body: some View {
         HStack(spacing: 12) {
             Button(action: startPause) {
-                Label(isRunning ? "Pause" : "Start",
+                Label(isRunning ? "Pause" : "Play",
                       systemImage: isRunning ? "pause.fill" : "play.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)

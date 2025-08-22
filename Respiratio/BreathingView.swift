@@ -1,71 +1,88 @@
-//
-//  BreathingView.swift
-//  Respiratio
-//
-//  Created by Izzy Drizzy on 2025-08-20.
-//
-
 import SwiftUI
 
 struct BreathingView: View {
+    // Data source (defined in BreathingExercise.swift)
     private let items = BreathingExercise.all
+
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    ForEach(items) { ex in
-                        NavigationLink {
-                            BreathingSessionView(exercise: ex, totalSeconds: 120) // 2 minutes
-                        } label: {
-                            Row(exercise: ex)
+            ZStack {
+                Color(.systemBackground).ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        // Page title
+                        Text("Breathing")
+                            .font(.system(size: 44, weight: .bold))
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
+
+                        // Cards
+                        VStack(spacing: 14) {
+                            ForEach(items) { exercise in
+                                NavigationLink {
+                                    BreathingSessionView(exercise: exercise, totalSeconds: 120)
+                                } label: {
+                                    BreathingRowCard(exercise: exercise)
+                                }
+                                .buttonStyle(.plain)
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                })
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 32)
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Breathing")
-            .navigationBarTitleDisplayMode(.large)
-        }
-    }
-
-    private struct Row: View {
-        let exercise: BreathingExercise
-        var body: some View {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle().fill(exercise.tint.opacity(0.18))
-                    Image(systemName: exercise.symbol)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(exercise.tint)
-                }
-                .frame(width: 36, height: 36)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(exercise.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    Text(exercise.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                // Fixed duration badge
-                Text("2 min")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.blue)
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
-                    .background(Capsule().fill(Color.blue.opacity(0.15)))
-                    .allowsHitTesting(false)
-            }
-            .padding(.vertical, 6)
-            .contentShape(Rectangle())
+            .navigationBarHidden(true)
         }
     }
 }
 
-#Preview { BreathingView() }
+private struct BreathingRowCard: View {
+    let exercise: BreathingExercise
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            // Leading icon
+            Image(systemName: exercise.symbol)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(exercise.tint.opacity(0.28), in: .circle)
+
+            // Text block — full width (no time pill, no chevron)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(exercise.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text(exercise.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true) // allow multi‑line
+                    .multilineTextAlignment(.leading)
+
+                Divider().opacity(0.2)
+
+                Text(exercise.subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer(minLength: 0) // no trailing accessories
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+        )
+        .contentShape(Rectangle()) // whole card tappable
+    }
+}
