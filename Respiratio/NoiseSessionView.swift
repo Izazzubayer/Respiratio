@@ -8,6 +8,8 @@ struct NoiseSessionView: View {
     private let presets: [BNDuration] = [.fiveMin, .fifteenMin, .thirtyMin, .oneHour, .infinite]
     @State private var showCustom = false
     @State private var customMinutes = 20
+    @State private var showStats = false
+    @State private var sessionStats: SessionStats?
 
     // MARK: - Ring state derived from engine
     private var totalSeconds: TimeInterval? { engine.selectedDuration.timeInterval }
@@ -36,8 +38,13 @@ struct NoiseSessionView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle(noise.title)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { engine.load(noise: noise) }
+        .onAppear { 
+            engine.load(noise: noise)
+            // Configure audio session for background playback
+            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        }
         .sheet(isPresented: $showCustom) { customDurationSheet }
+        .sheet(isPresented: $showStats) { statsSheet }
     }
 
     // MARK: Header
@@ -54,7 +61,7 @@ struct NoiseSessionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: Main Player (Redesigned)
+    // MARK: Main Player (Redesigned - No duplicate play button)
     private var mainPlayer: some View {
         VStack(spacing: 16) {
             // Progress Ring
@@ -82,23 +89,18 @@ struct NoiseSessionView: View {
                                    value: engine.isPlaying)
                 }
                 
-                // Play/Pause button
-                Button {
-                    engine.isPlaying ? engine.pause() : engine.play()
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 50, height: 50)
-                        
-                        Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.white)
+                // Status indicator (no play button)
+                VStack(spacing: 4) {
+                    Image(systemName: engine.isPlaying ? "speaker.wave.3.fill" : "speaker.slash.fill")
+                        .font(.title2)
+                        .foregroundStyle(engine.isPlaying ? Color.accentColor : .secondary)
+                    
+                    if engine.isPlaying {
+                        Text("Playing")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .scaleEffect(engine.isPlaying ? 1.0 : 1.0)
-                .animation(.easeInOut(duration: 0.2), value: engine.isPlaying)
             }
             
             // Timer display
@@ -232,7 +234,7 @@ struct NoiseSessionView: View {
             
             // Stop button
             Button {
-                engine.stop()
+                stopSession()
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
                 HStack(spacing: 6) {
@@ -306,6 +308,79 @@ struct NoiseSessionView: View {
         .presentationDragIndicator(.visible)
     }
 
+    // MARK: Stats Sheet
+    private var statsSheet: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Session Complete!")
+                            .font(.title3.weight(.semibold))
+                        Text(noise.title)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+
+                if let stats = sessionStats {
+                    HStack(spacing: 14) {
+                        statCard(title: "Duration", value: formatDuration(stats.duration), symbol: "timer", tint: .blue)
+                        statCard(title: "Volume", value: "\(Int(stats.volume * 100))%", symbol: "speaker.wave.3", tint: .mint)
+                    }
+                }
+
+                Button("Done") {
+                    showStats = false
+                }
+                .frame(maxWidth: .infinity)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.top, 4)
+            }
+            .padding(20)
+        }
+        .presentationDetents([.fraction(0.35), .medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    // MARK: Helper Methods
+    private func stopSession() {
+        let stats = SessionStats(
+            duration: engine.elapsed,
+            volume: engine.volume
+        )
+        sessionStats = stats
+        engine.stop()
+        showStats = true
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        if minutes > 0 {
+            return "\(minutes)m \(secs)s"
+        } else {
+            return "\(secs)s"
+        }
+    }
+
+    private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: symbol)
+                Text(title).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+            }.foregroundStyle(tint)
+            Text(value).font(.headline)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 14).fill(.thinMaterial))
+    }
+
     private func label(for d: BNDuration) -> String {
         switch d {
         case .fiveMin: return "5m"
@@ -318,7 +393,12 @@ struct NoiseSessionView: View {
     }
 }
 
-// MARK: - Helper Views (Simplified)
+// MARK: - Helper Views and Types
+
+private struct SessionStats {
+    let duration: TimeInterval
+    let volume: Float
+}
 
 private struct RoutePicker: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
@@ -329,3 +409,5 @@ private struct RoutePicker: UIViewRepresentable {
     }
     func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
 }
+
+

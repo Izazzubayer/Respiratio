@@ -141,7 +141,7 @@ struct BreathingSessionView: View {
             UIApplication.shared.isIdleTimerDisabled = false
             #endif
         }
-        .onChange(of: model.finished) { done in
+        .onChange(of: model.finished) { _, done in
             guard done else { return }
             withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) { showDone = true }
         }

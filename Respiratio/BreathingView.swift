@@ -6,84 +6,69 @@ struct BreathingView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemBackground).ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        // Page title
-                        Text("Breathing")
-                            .font(.system(size: 44, weight: .bold))
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-
-                        // Cards
-                        VStack(spacing: 14) {
-                            ForEach(items) { exercise in
-                                NavigationLink {
-                                    BreathingSessionView(exercise: exercise, totalSeconds: 120)
-                                } label: {
-                                    BreathingRowCard(exercise: exercise)
-                                }
-                                .buttonStyle(.plain)
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                })
-                            }
+            List {
+                Section {
+                    ForEach(items) { exercise in
+                        NavigationLink {
+                            BreathingSessionView(exercise: exercise, totalSeconds: 120)
+                        } label: {
+                            BreathingRow(exercise: exercise)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 32)
                     }
                 }
             }
-            .navigationBarHidden(true)
+            .listStyle(.insetGrouped)
+            .navigationTitle("Breathing")
+            .navigationBarTitleDisplayMode(.large)
         }
     }
 }
 
-private struct BreathingRowCard: View {
+private struct BreathingRow: View {
     let exercise: BreathingExercise
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            // Leading icon
-            Image(systemName: exercise.symbol)
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(exercise.tint.opacity(0.28), in: .circle)
+        HStack(spacing: 16) {
+            // Icon with consistent styling across tabs
+            ZStack {
+                Circle().fill(exercise.tint.opacity(0.15))
+                Image(systemName: exercise.symbol)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(exercise.tint)
+            }
+            .frame(width: 44, height: 44) // HIG minimum tap target
+            .accessibilityHidden(true)
 
-            // Text block — full width (no time pill, no chevron)
-            VStack(alignment: .leading, spacing: 8) {
+            // Content following HIG typography hierarchy
+            VStack(alignment: .leading, spacing: 4) {
                 Text(exercise.title)
-                    .font(.headline)
+                    .font(.headline) // HIG standard for section titles
                     .foregroundStyle(.primary)
-
-                Text(exercise.description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true) // allow multi‑line
-                    .multilineTextAlignment(.leading)
-
-                Divider().opacity(0.2)
+                    .lineLimit(1)
 
                 Text(exercise.subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.tertiary)
+                    .font(.body) // HIG standard for main content
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer(minLength: 0) // no trailing accessories
+            Spacer()
+
+            // Duration indicator - consistent with other tabs
+            Text("2 min")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(exercise.tint)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Capsule().fill(exercise.tint.opacity(0.12)))
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
-        )
-        .contentShape(Rectangle()) // whole card tappable
+        .padding(.vertical, 8) // 8pt grid system
+        .frame(minHeight: 52) // HIG preferred list row height
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(exercise.title). \(exercise.subtitle)")
+        .accessibilityHint("Tap to start breathing exercise")
     }
 }
 
@@ -91,32 +76,24 @@ private struct BreathingRowCard: View {
 
 #Preview("Breathing View - iPhone") {
     BreathingView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro")
 }
 
 #Preview("Breathing View - iPhone Dark") {
     BreathingView()
         .preferredColorScheme(.dark)
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro - Dark Mode")
 }
 
 #Preview("Breathing View - iPad") {
     BreathingView()
-        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
-        .previewDisplayName("iPad Pro")
 }
 
 #Preview("Breathing Card Components") {
     ScrollView {
         VStack(spacing: 14) {
             ForEach(BreathingExercise.all) { exercise in
-                BreathingRowCard(exercise: exercise)
+                                            BreathingRow(exercise: exercise)
             }
         }
         .padding(20)
     }
-    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-    .previewDisplayName("Breathing Card Components")
 }

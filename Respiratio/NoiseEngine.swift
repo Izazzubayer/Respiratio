@@ -15,10 +15,17 @@ final class NoiseEngine: ObservableObject {
         didSet { resetTimerForSelection() }
     }
     @Published var volume: Float = 0.7 {
-        didSet { player?.volume = isMuted ? 0 : volume }
+        didSet { 
+            player?.volume = isMuted ? 0 : volume
+            // Sync with system volume
+            MPVolumeView.setVolume(volume)
+        }
     }
     @Published var isMuted: Bool = false {
-        didSet { player?.volume = isMuted ? 0 : volume }
+        didSet { 
+            player?.volume = isMuted ? 0 : volume
+            updateNowPlaying(isPlaying: isPlaying)
+        }
     }
 
     // MARK: Internal
@@ -31,6 +38,7 @@ final class NoiseEngine: ObservableObject {
     // MARK: Setup
     func load(noise: BackgroundNoise) {
         stop() // stop current if any
+        currentNoise = noise
 
         guard let url = Bundle.main.url(forResource: noise.fileName, withExtension: noise.fileExt) else {
             print("Audio file not found:", noise.fileName)
@@ -38,6 +46,10 @@ final class NoiseEngine: ObservableObject {
         }
 
         do {
+            // Configure audio session for background playback
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+            
             // AVAudioPlayer is resilient & low‑overhead for looping mp3s
             let p = try AVAudioPlayer(contentsOf: url)
             p.numberOfLoops = -1          // loop forever (we handle end by timer)
@@ -45,31 +57,25 @@ final class NoiseEngine: ObservableObject {
             p.volume = isMuted ? 0 : volume
             p.prepareToPlay()             // <— important, avoids converter hiccups
             self.player = p
+            
+            // Setup remote commands for background control
+            setupRemoteCommands()
         } catch {
             print("AVAudioPlayer init error:", error)
-        }
-    }
-
-
-    private func preparePlayer(for noise: BackgroundNoise) {
-        guard let url = Bundle.main.url(forResource: noise.fileName, withExtension: noise.fileExt) else {
-            print("⚠️ Missing resource \(noise.fileName).\(noise.fileExt)")
-            return
-        }
-        do {
-            let p = try AVAudioPlayer(contentsOf: url)
-            p.numberOfLoops = -1
-            p.volume = isMuted ? 0 : volume
-            p.prepareToPlay()
-            player = p
-        } catch {
-            print("AVAudioPlayer error:", error)
         }
     }
 
     // MARK: Transport
     func play() {
         guard let p = player else { return }
+        
+        // Ensure audio session is active
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Failed to activate audio session:", error)
+        }
+        
         let now = Date()
         sessionStart = now
         if let total = selectedDuration.timeInterval {
@@ -83,7 +89,7 @@ final class NoiseEngine: ObservableObject {
         isPlaying = true
         startTicking()
         updateNowPlaying(isPlaying: true)
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()   // ✅ now compiles
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
     }
 
     func pause() {
@@ -91,7 +97,7 @@ final class NoiseEngine: ObservableObject {
         isPlaying = false
         stopTicking()
         updateNowPlaying(isPlaying: false)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()   // ✅
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     func stop() {
@@ -103,7 +109,7 @@ final class NoiseEngine: ObservableObject {
         sessionStart = nil
         sessionEnd = nil
         updateNowPlaying(isPlaying: false)
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()  // ✅
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 
     func nudge(by seconds: TimeInterval) {
@@ -195,5 +201,17 @@ final class NoiseEngine: ObservableObject {
             return .success
         }
         c.changePlaybackPositionCommand.isEnabled = false
+    }
+}
+
+// MARK: - MPVolumeView Extension for System Volume Control
+extension MPVolumeView {
+    static func setVolume(_ volume: Float) {
+        let volumeView = MPVolumeView()
+        let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            slider?.value = volume
+        }
     }
 }

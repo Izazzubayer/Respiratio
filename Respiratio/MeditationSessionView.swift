@@ -141,7 +141,7 @@ struct MeditationSessionView: View {
             UIApplication.shared.isIdleTimerDisabled = false   // make sure we re-enable autolock
             #endif
         }
-        .onChange(of: model.finished) { finished in
+        .onChange(of: model.finished) { _, finished in
             guard finished else { return }
             _ = streak.registerCompletion()
             withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {

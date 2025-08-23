@@ -4,13 +4,22 @@ struct ContentView: View {
     var body: some View {
         TabView {
             MeditationView()
-                .tabItem { Label("Meditation", systemImage: "leaf") }
+                .tabItem { 
+                    Label("Meditation", systemImage: "leaf.fill")
+                }
+                .accessibilityLabel("Meditation tab")
 
             BreathingView()
-                .tabItem { Label("Breathing", systemImage: "wind") }
+                .tabItem { 
+                    Label("Breathing", systemImage: "wind") 
+                }
+                .accessibilityLabel("Breathing exercises tab")
 
             BackgroundNoiseView()
-                .tabItem { Label("Noise", systemImage: "music.note") }
+                .tabItem { 
+                    Label("Noise", systemImage: "music.note") 
+                }
+                .accessibilityLabel("Background noise tab")
         }
     }
 }
@@ -19,33 +28,22 @@ struct ContentView: View {
 
 #Preview("Main App - iPhone") {
     ContentView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro")
 }
 
 #Preview("Main App - iPhone Landscape") {
     ContentView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewInterfaceOrientation(.landscapeLeft)
-        .previewDisplayName("iPhone 16 Pro - Landscape")
 }
 
 #Preview("Main App - iPad") {
     ContentView()
-        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
-        .previewDisplayName("iPad Pro")
 }
 
 #Preview("Main App - Dark Mode") {
     ContentView()
         .preferredColorScheme(.dark)
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro - Dark Mode")
 }
 
 #Preview("Main App - Dynamic Type Large") {
     ContentView()
         .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro - Large Text")
 }

@@ -40,10 +40,15 @@ struct SplashView: View {
             }
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.45)) { opacity = 1; scale = 1.0 }
+            withAnimation(.easeOut(duration: 0.45)) { 
+                opacity = 1; 
+                scale = 1.0 
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
                 withAnimation(.easeIn(duration: 0.6)) { opacity = 0 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { onFinished() }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { 
+                    onFinished() 
+                }
             }
         }
     }
@@ -51,10 +56,13 @@ struct SplashView: View {
     // MARK: - Image resolution helpers
     private func resolvedSplashImage() -> Image? {
         // 1) Asset or bundled image (no extension)
-        if let ui = UIImage(named: imageName) { return Image(uiImage: ui) }
+        if let ui = UIImage(named: imageName) { 
+            return Image(uiImage: ui) 
+        }
 
         // 2) Direct file in bundle (png/jpg)
-        for ext in ["png", "jpg", "jpeg"] {
+        let extensions = ["png", "jpg", "jpeg"]
+        for ext in extensions {
             if let url = Bundle.main.url(forResource: imageName, withExtension: ext),
                let data = try? Data(contentsOf: url),
                let ui = UIImage(data: data) {
@@ -63,8 +71,11 @@ struct SplashView: View {
         }
 
         // 3) Common name variants (in case of accidental rename)
-        for alt in ["splash_screen", "Splash", "splash"] {
-            if let ui = UIImage(named: alt) { return Image(uiImage: ui) }
+        let alternatives = ["splash_screen", "Splash", "splash"]
+        for alt in alternatives {
+            if let ui = UIImage(named: alt) { 
+                return Image(uiImage: ui) 
+            }
         }
         return nil
     }

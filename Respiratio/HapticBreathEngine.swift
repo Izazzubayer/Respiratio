@@ -25,11 +25,13 @@ final class HapticBreathEngine {
     private func prepareEngine() {
         supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
         guard supportsHaptics else { return }
+        
         do {
             engine = try CHHapticEngine()
             try engine?.start()
             engine?.playsHapticsOnly = true
         } catch {
+            print("Failed to prepare haptic engine:", error)
             supportsHaptics = false
             engine = nil
         }
@@ -46,21 +48,26 @@ final class HapticBreathEngine {
     func play(phase: Phase, duration: TimeInterval) {
         guard supportsHaptics else {
             // UIKit fallback
-            switch phase {
-            case .inhale: UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-            case .hold:   UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-            case .exhale: UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-            }
+            playUIKitFallback(for: phase)
             return
         }
 
         do {
             let pattern = try patternFor(phase: phase, duration: duration)
-            let player  = try engine?.makePlayer(with: pattern)
+            let player = try engine?.makePlayer(with: pattern)
             try engine?.start()
             try player?.start(atTime: 0)
         } catch {
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            print("Failed to play haptic pattern:", error)
+            playUIKitFallback(for: phase)
+        }
+    }
+    
+    private func playUIKitFallback(for phase: Phase) {
+        switch phase {
+        case .inhale: UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        case .hold:   UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        case .exhale: UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         }
     }
 
@@ -88,6 +95,7 @@ final class HapticBreathEngine {
         let (intensity, sharpness, pulseInterval) = holdProfile()
         var events: [CHHapticEvent] = []
         var t: TimeInterval = 0
+        
         while t < duration {
             let transient = CHHapticEvent(
                 eventType: .hapticTransient,
@@ -175,7 +183,7 @@ final class HapticBreathEngine {
     }
 
     private func holdProfile() -> (Float, Float, TimeInterval) {
-        // Strong “heartbeat” pulses
+        // Strong "heartbeat" pulses
         return (0.45, 0.5, 0.4)
     }
 

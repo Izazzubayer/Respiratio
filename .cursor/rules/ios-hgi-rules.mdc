@@ -1,0 +1,142 @@
+---
+alwaysApply: true
+---
+
+
+# Respiratio iOS App - Cursor Rules
+
+## Layout & Spacing
+- Use 8pt grid system: spacing multiples of 8, 12, 16, 24, 32
+- Minimum tap targets: 44×44pt for all interactive elements
+- Section margins: 16pt horizontal, 24pt vertical between major sections
+- Card padding: 16pt internal, 8pt between cards
+- List row height: minimum 44pt, prefer 52pt for content
+
+## Typography & Text
+- Use .headline for section titles, .title2 for page headers
+- Use .body for main content, .caption for secondary text
+- Prefer .monospacedDigit() for timers, durations, and numerical displays
+- Dynamic Type: test with accessibility text sizes (minimum 11pt)
+- Text contrast: ensure 4.5:1 ratio for body text, 3:1 for large text
+
+## Colors & Appearance
+- Use system colors: Color.primary, Color.secondary, Color.accentColor
+- Respect Dark Mode: test both color schemes, avoid hardcoded colors
+- Semantic colors: Color.red for destructive, Color.green for success
+- Background: Color(.systemBackground), Color(.secondarySystemBackground)
+- Accent: use sparingly, prefer system blue for primary actions
+
+## Interactive Elements
+- Buttons: .borderedProminent for primary actions, .bordered for secondary
+- Toggles: use system Toggle with clear labels and accessibility hints
+- Sliders: provide haptic feedback on value changes
+- Progress: ProgressView for determinate, custom for indeterminate
+- Loading: show clear states, never block user interaction
+
+## Navigation & Structure
+- Use NavigationStack for hierarchical navigation, TabView for main sections
+- Back button: always visible, clear destination indication
+- Tab bar: maximum 5 items, use SF Symbols with labels
+- Modal presentation: use .sheet() for content, .fullScreenCover() sparingly
+- Deep linking: support universal links and app shortcuts
+
+## Feedback & Motion
+- Haptics: UIImpactFeedbackGenerator for interactions, CHHapticEngine for custom
+- Animations: .easeInOut(duration: 0.3) for standard transitions
+- Avoid auto-starting animations/audio without user consent
+- Motion: respect reduced motion accessibility preference
+- Transitions: use .transition(.opacity) for simple, .asymmetric for complex
+
+## Accessibility
+- VoiceOver: .accessibilityLabel for all interactive elements
+- Dynamic Type: test with largest accessibility text size
+- Color: never rely solely on color to convey information
+- Contrast: verify with Color Contrast Analyzer
+- Focus: support keyboard navigation and Switch Control
+
+## Audio & Media
+- Audio session: .playback category with .mixWithOthers option
+- Background audio: implement proper session management
+- Volume control: respect system volume, provide visual feedback
+- Media controls: integrate with Now Playing center
+- Audio feedback: use sparingly, respect user preferences
+
+## When in Doubt
+Consult @docs/hig-foundations.md for comprehensive guidance. Reference specific sections:
+- Layout: [Spatial Design](#spatial-design)
+- Typography: [Typography](#typography)  
+- Colors: [Color](#color)
+- Navigation: [Navigation](#navigation)
+- Accessibility: [Accessibility](#accessibility)
+- Feedback: [Feedback](#feedback)
+
+Use @docs/hig-foundations-checklist.md for systematic review during development.
+
+# Respiratio iOS App - Cursor Rules
+
+## Layout & Spacing
+- Use 8pt grid system: spacing multiples of 8, 12, 16, 24, 32
+- Minimum tap targets: 44×44pt for all interactive elements
+- Section margins: 16pt horizontal, 24pt vertical between major sections
+- Card padding: 16pt internal, 8pt between cards
+- List row height: minimum 44pt, prefer 52pt for content
+
+## Typography & Text
+- Use .headline for section titles, .title2 for page headers
+- Use .body for main content, .caption for secondary text
+- Prefer .monospacedDigit() for timers, durations, and numerical displays
+- Dynamic Type: test with accessibility text sizes (minimum 11pt)
+- Text contrast: ensure 4.5:1 ratio for body text, 3:1 for large text
+
+## Colors & Appearance
+- Use system colors: Color.primary, Color.secondary, Color.accentColor
+- Respect Dark Mode: test both color schemes, avoid hardcoded colors
+- Semantic colors: Color.red for destructive, Color.green for success
+- Background: Color(.systemBackground), Color(.secondarySystemBackground)
+- Accent: use sparingly, prefer system blue for primary actions
+
+## Interactive Elements
+- Buttons: .borderedProminent for primary actions, .bordered for secondary
+- Toggles: use system Toggle with clear labels and accessibility hints
+- Sliders: provide haptic feedback on value changes
+- Progress: ProgressView for determinate, custom for indeterminate
+- Loading: show clear states, never block user interaction
+
+## Navigation & Structure
+- Use NavigationStack for hierarchical navigation, TabView for main sections
+- Back button: always visible, clear destination indication
+- Tab bar: maximum 5 items, use SF Symbols with labels
+- Modal presentation: use .sheet() for content, .fullScreenCover() sparingly
+- Deep linking: support universal links and app shortcuts
+
+## Feedback & Motion
+- Haptics: UIImpactFeedbackGenerator for interactions, CHHapticEngine for custom
+- Animations: .easeInOut(duration: 0.3) for standard transitions
+- Avoid auto-starting animations/audio without user consent
+- Motion: respect reduced motion accessibility preference
+- Transitions: use .transition(.opacity) for simple, .asymmetric for complex
+
+## Accessibility
+- VoiceOver: .accessibilityLabel for all interactive elements
+- Dynamic Type: test with largest accessibility text size
+- Color: never rely solely on color to convey information
+- Contrast: verify with Color Contrast Analyzer
+- Focus: support keyboard navigation and Switch Control
+
+## Audio & Media
+- Audio session: .playback category with .mixWithOthers option
+- Background audio: implement proper session management
+- Volume control: respect system volume, provide visual feedback
+- Media controls: integrate with Now Playing center
+- Audio feedback: use sparingly, respect user preferences
+
+## When in Doubt
+Consult @docs/hig-foundations.md for comprehensive guidance. Reference specific sections:
+- Layout: [Spatial Design](#spatial-design)
+- Typography: [Typography](#typography)  
+- Colors: [Color](#color)
+- Navigation: [Navigation](#navigation)
+- Accessibility: [Accessibility](#accessibility)
+- Feedback: [Feedback](#feedback)
+
+Use @docs/hig-foundations-checklist.md for systematic review during development.

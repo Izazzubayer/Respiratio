@@ -73,34 +73,41 @@ private struct MeditationRow: View {
     let preset: MeditationPreset
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 16) {
+            // Icon with consistent styling across tabs
             ZStack {
                 Circle().fill(preset.level.tint.opacity(0.15))
                 Image(systemName: preset.symbol)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(preset.level.tint)
             }
-            .frame(width: 36, height: 36)
+            .frame(width: 44, height: 44) // HIG minimum tap target
             .accessibilityHidden(true)
 
+            // Content following HIG typography hierarchy
             VStack(alignment: .leading, spacing: 4) {
                 Text(preset.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.headline) // HIG standard for section titles
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
                 Text("\(preset.minutes) min")
-                    .font(.caption)
+                    .font(.body) // HIG standard for main content
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
+            // Level badge - consistent with other tabs
             LevelBadge(level: preset.level)
-                .allowsHitTesting(false) // ensure badge doesn’t capture taps
+                .allowsHitTesting(false)
         }
-        .padding(.vertical, 6)
-        .contentShape(Rectangle()) // ensure full row is tappable
+        .padding(.vertical, 8) // 8pt grid system
+        .frame(minHeight: 52) // HIG preferred list row height
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(preset.title). \(preset.minutes) minutes. \(preset.level.rawValue) level")
+        .accessibilityHint("Tap to start meditation session")
     }
 }
 
@@ -109,12 +116,12 @@ private struct LevelBadge: View {
 
     var body: some View {
         Text(level.rawValue)
-            .font(.caption2.weight(.semibold))
+            .font(.caption.weight(.medium)) // Consistent with other badge styles
             .foregroundStyle(level.tint)
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
-            .background(Capsule().fill(level.tint.opacity(0.15)))
-            .accessibilityHint("Difficulty level")
+            .background(Capsule().fill(level.tint.opacity(0.12))) // Consistent opacity
+            .accessibilityHidden(true) // Included in parent accessibility label
     }
 }
 
@@ -139,21 +146,15 @@ private struct SectionHeader: View {
 
 #Preview("Meditation View - iPhone") {
     MeditationView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro")
 }
 
 #Preview("Meditation View - iPhone Dark") {
     MeditationView()
         .preferredColorScheme(.dark)
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-        .previewDisplayName("iPhone 16 Pro - Dark Mode")
 }
 
 #Preview("Meditation View - iPad") {
     MeditationView()
-        .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
-        .previewDisplayName("iPad Pro")
 }
 
 #Preview("Meditation Row Component") {
@@ -165,8 +166,6 @@ private struct SectionHeader: View {
         }
         .listStyle(.insetGrouped)
     }
-    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-    .previewDisplayName("Meditation Row Components")
 }
 
 #Preview("Level Badge Components") {
@@ -176,6 +175,4 @@ private struct SectionHeader: View {
         }
     }
     .padding()
-    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro"))
-    .previewDisplayName("Level Badge Components")
 }

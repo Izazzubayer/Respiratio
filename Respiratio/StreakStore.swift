@@ -22,11 +22,11 @@ final class StreakStore: ObservableObject {
     @Published private(set) var bestStreak: Int = 0
     @Published private(set) var lastCompletionDate: Date? = nil
 
-    private let cal = Calendar.current
+    private let calendar = Calendar.current
 
     init() {
-        self.streak = streakStorage
-        self.bestStreak = bestStreakStorage
+        self.streak = max(0, streakStorage)
+        self.bestStreak = max(0, bestStreakStorage)
         self.lastCompletionDate = lastDateStorage == 0 ? nil : Date(timeIntervalSince1970: lastDateStorage)
     }
 
@@ -36,14 +36,15 @@ final class StreakStore: ObservableObject {
         var didIncrement = false
         var didReset = false
 
-        let today = cal.startOfDay(for: date)
-        let last = lastCompletionDate.map { cal.startOfDay(for: $0) }
+        let today = calendar.startOfDay(for: date)
+        let last = lastCompletionDate.map { calendar.startOfDay(for: $0) }
 
         switch last {
         case .some(let lastDay):
-            if cal.isDate(today, inSameDayAs: lastDay) {
+            if calendar.isDate(today, inSameDayAs: lastDay) {
                 // same day: no change
-            } else if let yday = cal.date(byAdding: .day, value: 1, to: lastDay), cal.isDate(today, inSameDayAs: yday) {
+            } else if let yday = calendar.date(byAdding: .day, value: 1, to: lastDay), 
+                      calendar.isDate(today, inSameDayAs: yday) {
                 streak += 1
                 didIncrement = true
             } else {
@@ -58,12 +59,23 @@ final class StreakStore: ObservableObject {
         bestStreak = max(bestStreak, streak)
         lastCompletionDate = today
 
-        // Persist
-        streakStorage = streak
-        bestStreakStorage = bestStreak
+        // Persist with validation
+        streakStorage = max(0, streak)
+        bestStreakStorage = max(0, bestStreak)
         lastDateStorage = today.timeIntervalSince1970
 
         objectWillChange.send()
         return (didIncrement, didReset)
+    }
+    
+    /// Reset streak data (useful for testing or user preference)
+    func resetStreak() {
+        streak = 0
+        bestStreak = 0
+        lastCompletionDate = nil
+        streakStorage = 0
+        bestStreakStorage = 0
+        lastDateStorage = 0
+        objectWillChange.send()
     }
 }

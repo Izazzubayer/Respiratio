@@ -10,13 +10,18 @@ enum NoiseLiveActivityManager {
     private static var activity: Activity<NoiseActivityAttributes>?
 
     static func start(title: String, remaining: Int?) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { 
+            print("Live Activities not enabled")
+            return 
+        }
+        
         let attributes = NoiseActivityAttributes()
         let state = NoiseActivityAttributes.ContentState(
             title: title,
             remainingSeconds: remaining,
             isPlaying: true
         )
+        
         do {
             activity = try Activity.request(
                 attributes: attributes,
@@ -29,18 +34,35 @@ enum NoiseLiveActivityManager {
     }
 
     static func update(title: String, remaining: Int?, isPlaying: Bool) {
-        guard let activity else { return }
+        guard let activity else { 
+            print("No active Live Activity to update")
+            return 
+        }
+        
         let state = NoiseActivityAttributes.ContentState(
             title: title,
             remainingSeconds: remaining,
             isPlaying: isPlaying
         )
-        Task { await activity.update(.init(state: state, staleDate: nil)) }
+        
+        Task { 
+            await activity.update(.init(state: state, staleDate: nil))
+        }
     }
 
     static func end() {
-        guard let activity else { return }
-        Task { await activity.end(dismissalPolicy: .immediate) }
-        Self.activity = nil
+        guard let activity else { 
+            print("No active Live Activity to end")
+            return 
+        }
+        
+        Task { 
+            await activity.end(dismissalPolicy: .immediate)
+            Self.activity = nil
+        }
+    }
+    
+    static var isActive: Bool {
+        activity != nil
     }
 }

@@ -19,7 +19,16 @@ struct KeepAwakeToggle: View {
             #endif
         } label: {
             Image(systemName: keepAwake ? "moon.zzz.fill" : "moon")
+                .font(.title3)
+                .foregroundStyle(keepAwake ? .blue : .secondary)
         }
         .accessibilityLabel(keepAwake ? "Keep screen awake" : "Allow auto‑lock")
+        .accessibilityHint("Tap to toggle screen sleep prevention")
+        .onDisappear {
+            // Always re-enable auto-lock when view disappears
+            #if os(iOS)
+            UIApplication.shared.isIdleTimerDisabled = false
+            #endif
+        }
     }
 }
