@@ -1,121 +1,112 @@
 import SwiftUI
 import AVKit
+import MediaPlayer
 
 struct NoiseSessionView: View {
     let noise: BackgroundNoise
     @StateObject private var engine = NoiseEngine.shared
-
+    @Environment(\.dismiss) private var dismiss
+    
     private let presets: [BNDuration] = [.fiveMin, .fifteenMin, .thirtyMin, .oneHour, .infinite]
     @State private var showCustom = false
     @State private var customMinutes = 20
-    @State private var showStats = false
-    @State private var sessionStats: SessionStats?
-
-    // MARK: - Ring state derived from engine
-    private var totalSeconds: TimeInterval? { engine.selectedDuration.timeInterval }
-    private var progress: Double? {
-        guard let total = totalSeconds, total > 0 else { return nil } // nil = infinite
-        return min(max(engine.elapsed / total, 0), 1)
-    }
-    private var remainingText: String {
-        guard let total = totalSeconds else { return "∞" }
-        let remain = max(0, total - engine.elapsed)
-        let m = Int(remain) / 60, s = Int(remain) % 60
-        return String(format: "%02d:%02d", m, s)
-    }
-
+    @State private var showCompletionAlert = false
+    @State private var sessionDuration: TimeInterval = 0
+    
     var body: some View {
-        VStack(spacing: 24) {
-            header
-            mainPlayer
-            sleepTimer
-            volumeSection
-            transportSection
+        ScrollView {
+            VStack(spacing: 24) {
+                // Description and tags
+                descriptionSection
+                
+                // Progress Ring
+                progressSection
+                
+                // Sleep Timer chips
+                sleepTimerSection
+                
+                // Volume controls
+                volumeSection
+                
+                // Transport controls
+                transportSection
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 32)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 20)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle(noise.title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { 
             engine.load(noise: noise)
-            // Configure audio session for background playback
-            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
         }
-        .sheet(isPresented: $showCustom) { customDurationSheet }
-        .sheet(isPresented: $showStats) { statsSheet }
+        .sheet(isPresented: $showCustom) { 
+            customDurationSheet 
+        }
+        .alert("Session Complete", isPresented: $showCompletionAlert) {
+            Button("Continue Listening") {
+                // Stay on current screen, resume if desired
+            }
+            Button("Back to Menu") {
+                dismiss()
+            }
+        } message: {
+            Text("Great session! You listened to \(noise.title) for \(formatDuration(sessionDuration))." + 
+                 (sessionDuration >= 300 ? "\n\nWell done on your focus time! 🎯" : ""))
+        }
     }
-
-    // MARK: Header
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 16) {
+    
+    // MARK: - Description Section
+    private var descriptionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
             if !noise.summary.isEmpty {
                 Text(noise.summary)
-                    .font(.body)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
             }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: Main Player (Redesigned - No duplicate play button)
-    private var mainPlayer: some View {
-        VStack(spacing: 16) {
-            // Progress Ring
-            ZStack {
-                // Background circle
-                Circle()
-                    .stroke(Color(.tertiarySystemFill), lineWidth: 6)
-                    .frame(width: 140, height: 140)
-                
-                // Progress circle
-                if let p = progress {
-                    Circle()
-                        .trim(from: 0, to: CGFloat(p))
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 140, height: 140)
-                } else {
-                    // Infinite mode - rotating arc
-                    Circle()
-                        .trim(from: 0, to: 0.3)
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .rotationEffect(.degrees(engine.isPlaying ? 360 : 0))
-                        .frame(width: 140, height: 140)
-                        .animation(engine.isPlaying ? .linear(duration: 2).repeatForever(autoreverses: false) : .default,
-                                   value: engine.isPlaying)
-                }
-                
-                // Status indicator (no play button)
-                VStack(spacing: 4) {
-                    Image(systemName: engine.isPlaying ? "speaker.wave.3.fill" : "speaker.slash.fill")
-                        .font(.title2)
-                        .foregroundStyle(engine.isPlaying ? Color.accentColor : .secondary)
-                    
-                    if engine.isPlaying {
-                        Text("Playing")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            
+            // Tag chips
+            if !noise.tags.isEmpty {
+                HStack {
+                    ForEach(noise.tags, id: \.self) { tag in
+                        Text(tag.capitalized)
+                            .font(.caption.weight(.medium))
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 8)
+                            .background(Capsule().fill(noise.tint.opacity(0.12)))
+                            .foregroundStyle(noise.tint)
                     }
+                    Spacer()
                 }
             }
+        }
+    }
+    
+    // MARK: - Progress Section
+    private var progressSection: some View {
+        VStack(spacing: 8) {
+            ProgressRing(
+                progress: engine.progress,
+                isIndeterminate: engine.durationSeconds == nil && engine.isPlaying,
+                accent: Color.accentColor
+            )
+            .frame(width: 120, height: 120)
+            .accessibilityLabel(engine.isPlaying ? "Playing" : "Paused")
+            .accessibilityValue(engine.durationSeconds == nil ? "Indeterminate" 
+                              : "\(Int(engine.progress * 100)) percent")
             
-            // Timer display
-            Text(remainingText)
-                .font(.title3.monospacedDigit().weight(.medium))
+            Text(engine.durationSeconds == nil ? "∞" : "")
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity)
     }
-
-    // MARK: Sleep Timer (Redesigned)
-    private var sleepTimer: some View {
+    
+    // MARK: - Sleep Timer Section
+    private var sleepTimerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Sleep Timer")
-                .font(.headline.weight(.semibold))
+                .font(.headline)
                 .foregroundStyle(.primary)
             
             LazyVGrid(columns: [
@@ -123,174 +114,157 @@ struct NoiseSessionView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 8) {
-                ForEach(presets, id: \.self) { duration in
+                ForEach(Array(presets.enumerated()), id: \.element) { index, duration in
                     let selected = duration == engine.selectedDuration
-                    Button {
-                        engine.selectedDuration = duration
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    } label: {
-                        Text(label(for: duration))
-                            .font(.subheadline.weight(.medium))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(selected ? Color.accentColor : Color(.tertiarySystemFill))
-                            )
-                            .foregroundStyle(selected ? .white : .primary)
+                    
+                    if selected {
+                        Button {
+                            engine.selectedDuration = duration
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        } label: {
+                            Text(label(for: duration))
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44) // HIG minimum tap target
+                        }
+                        .buttonStyle(BorderedProminentButtonStyle())
+                        .controlSize(.small)
+                        .accessibilityLabel("Set timer to \(label(for: duration))")
+                    } else {
+                        Button {
+                            engine.selectedDuration = duration
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        } label: {
+                            Text(label(for: duration))
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44) // HIG minimum tap target
+                        }
+                        .buttonStyle(BorderedButtonStyle())
+                        .controlSize(.small)
+                        .accessibilityLabel("Set timer to \(label(for: duration))")
                     }
-                    .buttonStyle(.plain)
                 }
                 
-                // Custom button
+                // Custom duration button
                 Button {
                     showCustom = true
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
                     Label("Custom", systemImage: "timer")
                         .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color(.tertiarySystemFill))
-                        )
-                        .foregroundStyle(.primary)
+                        .frame(height: 44) // HIG minimum tap target
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(BorderedButtonStyle())
+                .controlSize(.small)
+                .accessibilityLabel("Set custom duration")
             }
         }
+        .accessibilityLabel("Sleep Timer")
     }
-
-    // MARK: Volume Section (Redesigned)
+    
+    // MARK: - Volume Section
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Volume")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                
-                Spacer()
-                
-                RoutePicker()
-                    .frame(width: 28, height: 28)
-            }
+            Text("Volume")
+                .font(.headline)
+                .foregroundStyle(.primary)
             
-            VStack(spacing: 10) {
-                // Volume slider
-                HStack(spacing: 14) {
-                    Button {
-                        engine.isMuted.toggle()
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    } label: {
-                        Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.fill")
-                            .font(.title3)
-                            .foregroundStyle(engine.isMuted ? .secondary : .primary)
-                            .frame(width: 22, height: 22)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Slider(
-                        value: Binding(
-                            get: { Double(engine.volume) },
-                            set: { engine.volume = Float($0) }
-                        ),
-                        in: 0...1
-                    )
-                    .tint(Color.accentColor)
-                    
-                    Image(systemName: "speaker.wave.3.fill")
+            HStack(spacing: 16) {
+                // Mute button
+                Button {
+                    engine.isMuted.toggle()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 22, height: 22)
+                        .frame(width: 44, height: 44) // HIG minimum tap target
                 }
+                .buttonStyle(BorderedButtonStyle())
+                .accessibilityLabel(engine.isMuted ? "Unmute" : "Mute")
+                
+                // Volume slider
+                Slider(value: $engine.volume, in: 0...1) {
+                    Text("Volume")
+                } minimumValueLabel: {
+                    Image(systemName: "speaker.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } maximumValueLabel: {
+                    Image(systemName: "speaker.3.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel("Volume")
+                .accessibilityValue("\(Int(engine.volume * 100)) percent")
+                
+                // AirPlay route picker
+                MPVolumeViewWrapper()
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel("AirPlay")
             }
         }
     }
-
-    // MARK: Transport Section (Redesigned)
+    
+    // MARK: - Transport Section
     private var transportSection: some View {
-        VStack(spacing: 12) {
-            // Main play/pause button
+        HStack(spacing: 16) {
+            Spacer()
+            
+            // Play/Pause button
             Button {
                 engine.isPlaying ? engine.pause() : engine.play()
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title3)
-                    Text(engine.isPlaying ? "Pause" : "Play")
-                        .font(.headline.weight(.semibold))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.accentColor)
-                )
+                Label(engine.isPlaying ? "Pause" : "Play",
+                      systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.headline.weight(.semibold))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(BorderedProminentButtonStyle())
+            .controlSize(.large)
+            .accessibilityLabel(engine.isPlaying ? "Pause audio" : "Play audio")
             
             // Stop button
-            Button {
-                stopSession()
+            Button(role: .destructive) {
+                sessionDuration = engine.elapsed
+                engine.stop()
+                showCompletionAlert = true
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "stop.fill")
-                        .font(.title3)
-                    Text("Stop")
-                        .font(.headline.weight(.semibold))
-                }
-                .foregroundStyle(.red)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.red, lineWidth: 2)
-                )
+                Label("Stop", systemImage: "stop.fill")
+                    .font(.subheadline.weight(.semibold))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(BorderedButtonStyle())
+            .controlSize(.large)
+            .tint(.red)
+            .accessibilityLabel("Stop session and show statistics")
+            
+            Spacer()
         }
     }
-
-    // MARK: Custom duration sheet (Improved)
+    
+    // MARK: - Custom Duration Sheet
     private var customDurationSheet: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Text("Custom Duration")
-                    .font(.title2.weight(.bold))
-                    .padding(.top, 20)
+                Text("Set Custom Duration")
+                    .font(.title2.weight(.semibold))
                 
-                VStack(spacing: 8) {
-                    Text("Select duration in minutes")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    Picker("Minutes", selection: $customMinutes) {
-                        ForEach(1...180, id: \.self) { m in 
-                            Text("\(m) min").tag(m) 
-                        }
+                Picker("Minutes", selection: $customMinutes) {
+                    ForEach(1...180, id: \.self) { minutes in
+                        Text("\(minutes) min")
+                            .tag(minutes)
                     }
-                    .pickerStyle(.wheel)
-                    .frame(height: 120)
-                    .clipped()
                 }
-                
-                Text("Session will end after \(customMinutes) minute\(customMinutes == 1 ? "" : "s")")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Spacer()
+                .pickerStyle(.wheel)
+                .frame(height: 200)
                 
                 HStack(spacing: 16) {
-                    Button("Cancel") { 
-                        showCustom = false 
+                    Button("Cancel") {
+                        showCustom = false
                     }
                     .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(BorderedButtonStyle())
                     
                     Button("Set Duration") {
                         engine.selectedDuration = .minutes(customMinutes)
@@ -298,91 +272,17 @@ struct NoiseSessionView: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     }
                     .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(BorderedProminentButtonStyle())
                 }
-                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 20)
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-    }
-
-    // MARK: Stats Sheet
-    private var statsSheet: some View {
-        NavigationStack {
-            VStack(spacing: 18) {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Session Complete!")
-                            .font(.title3.weight(.semibold))
-                        Text(noise.title)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-
-                if let stats = sessionStats {
-                    HStack(spacing: 14) {
-                        statCard(title: "Duration", value: formatDuration(stats.duration), symbol: "timer", tint: .blue)
-                        statCard(title: "Volume", value: "\(Int(stats.volume * 100))%", symbol: "speaker.wave.3", tint: .mint)
-                    }
-                }
-
-                Button("Done") {
-                    showStats = false
-                }
-                .frame(maxWidth: .infinity)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding(.top, 4)
-            }
-            .padding(20)
-        }
-        .presentationDetents([.fraction(0.35), .medium])
-        .presentationDragIndicator(.visible)
-    }
-
-    // MARK: Helper Methods
-    private func stopSession() {
-        let stats = SessionStats(
-            duration: engine.elapsed,
-            volume: engine.volume
-        )
-        sessionStats = stats
-        engine.stop()
-        showStats = true
-    }
-
-    private func formatDuration(_ seconds: TimeInterval) -> String {
-        let minutes = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        if minutes > 0 {
-            return "\(minutes)m \(secs)s"
-        } else {
-            return "\(secs)s"
+            .padding()
+            .presentationDetents([.medium])
         }
     }
-
-    private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: symbol)
-                Text(title).font(.caption).foregroundStyle(.secondary)
-                Spacer()
-            }.foregroundStyle(tint)
-            Text(value).font(.headline)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.thinMaterial))
-    }
-
-    private func label(for d: BNDuration) -> String {
-        switch d {
+    
+    // MARK: - Helper Methods
+    private func label(for duration: BNDuration) -> String {
+        switch duration {
         case .fiveMin: return "5m"
         case .fifteenMin: return "15m"
         case .thirtyMin: return "30m"
@@ -391,23 +291,39 @@ struct NoiseSessionView: View {
         case .minutes(let m): return "\(m)m"
         }
     }
-}
-
-// MARK: - Helper Views and Types
-
-private struct SessionStats {
-    let duration: TimeInterval
-    let volume: Float
-}
-
-private struct RoutePicker: UIViewRepresentable {
-    func makeUIView(context: Context) -> AVRoutePickerView {
-        let v = AVRoutePickerView()
-        v.activeTintColor = UIColor.label
-        v.tintColor = UIColor.secondaryLabel
-        return v
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        let seconds = Int(duration) % 60
+        
+        if hours > 0 {
+            return String(format: "%dh %dm", hours, minutes)
+        } else if minutes > 0 {
+            return String(format: "%dm %ds", minutes, seconds)
+        } else {
+            return String(format: "%ds", seconds)
+        }
     }
-    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
 }
 
+// MARK: - AVRoutePickerView Wrapper
+struct MPVolumeViewWrapper: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let routePickerView = AVRoutePickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
+        routePickerView.activeTintColor = UIColor.label
+        routePickerView.tintColor = UIColor.secondaryLabel
+        return routePickerView
+    }
+    
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
+        // No updates needed
+    }
+}
 
+// MARK: - Preview
+#Preview("Noise Session View") {
+    NavigationStack {
+        NoiseSessionView(noise: NoiseCatalog.all.first!)
+    }
+}

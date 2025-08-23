@@ -41,7 +41,13 @@ final class BreathingSessionModel: ObservableObject {
     func start() {
         guard !isRunning && !finished else { return }
         isRunning = true
-        haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
+        
+        // Only use traditional haptics for exercises that don't handle their own haptics
+        // Box breathing and 4-7-8 breathing handle their own haptics internally
+        if exercise.title != BreathingExercise.box.title && exercise.title != BreathingExercise.fourSevenEight.title {
+            haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
+        }
+        
         tick()
         ticker = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
@@ -68,7 +74,11 @@ final class BreathingSessionModel: ObservableObject {
     private func advancePhase() {
         phaseIndex = (phaseIndex + 1) % exercise.cycle.count
         phaseRemaining = exercise.cycle[phaseIndex].seconds
-        haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
+        
+        // Only use traditional haptics for exercises that don't handle their own haptics
+        if exercise.title != BreathingExercise.box.title && exercise.title != BreathingExercise.fourSevenEight.title {
+            haptics.play(phase: chPhase(currentPhase.kind), duration: TimeInterval(phaseRemaining))
+        }
     }
 
     private func finish() {
@@ -108,15 +118,37 @@ struct BreathingSessionView: View {
 
                 Spacer(minLength: 0)
 
-                // Orb stays still until user presses Play
-                SyncedBreathOrb(
-                    phase: model.currentPhase.kind,
-                    phaseDuration: model.currentPhase.seconds,
-                    secondsLeft: model.phaseRemaining,
-                    tint: model.exercise.tint,
-                    isRunning: model.isRunning          // NEW: gate animations
-                )
-                .frame(width: 260, height: 260)
+                // Use custom visualizations for specific breathing techniques
+                if model.exercise.title == BreathingExercise.box.title {
+                    BoxBreathingView(
+                        phase: model.currentPhase.kind,
+                        phaseDuration: model.currentPhase.seconds,
+                        secondsLeft: model.phaseRemaining,
+                        tint: model.exercise.tint,
+                        isRunning: model.isRunning,
+                        phaseIndex: model.phaseIndex
+                    )
+                    .frame(width: 280, height: 280)
+                } else if model.exercise.title == BreathingExercise.fourSevenEight.title {
+                    TriangleBreathingView(
+                        phase: model.currentPhase.kind,
+                        phaseDuration: model.currentPhase.seconds,
+                        secondsLeft: model.phaseRemaining,
+                        tint: model.exercise.tint,
+                        isRunning: model.isRunning,
+                        phaseIndex: model.phaseIndex
+                    )
+                    .frame(width: 280, height: 280)
+                } else {
+                    SyncedBreathOrb(
+                        phase: model.currentPhase.kind,
+                        phaseDuration: model.currentPhase.seconds,
+                        secondsLeft: model.phaseRemaining,
+                        tint: model.exercise.tint,
+                        isRunning: model.isRunning
+                    )
+                    .frame(width: 260, height: 260)
+                }
 
                 VStack(spacing: 8) {
                     PhaseChip(kind: model.currentPhase.kind, tint: model.exercise.tint)
@@ -130,7 +162,24 @@ struct BreathingSessionView: View {
                 Spacer(minLength: 0)
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        // Remove custom back button to avoid duplicate back button
+        /*
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Breathing")
+                    }
+                    .foregroundStyle(.blue)
+                    .font(.headline)
+                }
+            }
+        }
+        */
         .onAppear {
             // Do NOT auto-start; keep paused by default
             try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
@@ -164,11 +213,7 @@ struct BreathingSessionView: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "wind")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) { // Increased from 4 to 8 for better HIG spacing
                 Text(model.exercise.title)
                     .font(.headline)
                 // 👇 SHOW DESCRIPTION (1–3 lines)
@@ -340,7 +385,7 @@ private struct DoneSheet: View {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 28))
                     .foregroundStyle(.green)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 6) { // Increased from 2 to 6 for better HIG spacing
                     Text("Nice breathing!").font(.title3.weight(.semibold))
                     Text(exercise.title).foregroundStyle(.secondary)
                 }

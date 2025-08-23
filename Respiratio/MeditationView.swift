@@ -12,34 +12,69 @@ import SwiftUI
 struct MeditationPreset: Identifiable, Hashable {
     let id = UUID()
     let title: String
+    let description: String
     let minutes: Int
-    let level: Level
     let symbol: String
-
-    enum Level: String, CaseIterable {
-        case beginner = "Beginner"
-        case intermediate = "Intermediate"
-        case advanced = "Advanced"
-        case pro = "Pro"
-
-        var tint: Color {
-            switch self {
-            case .beginner: return .green
-            case .intermediate: return .blue
-            case .advanced: return .orange
-            case .pro: return .purple
-            }
-        }
-    }
+    let audioFileName: String? // Optional audio file for guided meditation
+    let hasAudio: Bool
+    let tags: [String] // Use case tags for each meditation
 }
 
 private let quickMeditations: [MeditationPreset] = [
-    .init(title: "2-Minute Meditation",  minutes: 2,  level: .beginner,     symbol: "leaf.fill"),
-    .init(title: "5-Minute Meditation",  minutes: 5,  level: .beginner,     symbol: "leaf.fill"),
-    .init(title: "10-Minute Meditation", minutes: 10, level: .intermediate, symbol: "leaf.fill"),
-    .init(title: "15-Minute Meditation", minutes: 15, level: .intermediate, symbol: "leaf.fill"),
-    .init(title: "20-Minute Meditation", minutes: 20, level: .advanced,     symbol: "leaf.fill"),
-    .init(title: "30-Minute Meditation", minutes: 30, level: .pro,          symbol: "leaf.fill"),
+    .init(
+        title: "2-Minute Quick Reset",
+        description: "Perfect for a quick mental refresh during busy days. Ideal for office breaks, before meetings, or when you need to reset your mind quickly.",
+        minutes: 2,
+        symbol: "timer",
+        audioFileName: nil,
+        hasAudio: false,
+        tags: ["Quick Reset", "Pre-Meeting", "Mental Refresh"]
+    ),
+    .init(
+        title: "5-Minute Focus Boost",
+        description: "Enhance concentration and mental clarity. Great for students before studying, professionals before important tasks, or anyone needing to sharpen their focus.",
+        minutes: 5,
+        symbol: "timer",
+        audioFileName: nil,
+        hasAudio: false,
+        tags: ["Focus", "Study Prep", "Work Focus"]
+    ),
+    .init(
+        title: "10-Minute Guided Journey",
+        description: "A guided meditation experience with audio narration. Perfect for beginners who want direction, or anyone seeking a deeper, more immersive meditation session.",
+        minutes: 10,
+        symbol: "waveform",
+        audioFileName: "10-min",
+        hasAudio: true,
+        tags: ["Guided", "Calm", "Relaxation"]
+    ),
+    .init(
+        title: "15-Minute Deep Calm",
+        description: "Achieve deeper relaxation and inner peace. Ideal for evening wind-down, stress relief, or when you need extended time to quiet your mind and find tranquility.",
+        minutes: 15,
+        symbol: "timer",
+        audioFileName: nil,
+        hasAudio: false,
+        tags: ["Deep Relaxation", "Evening Wind-Down"]
+    ),
+    .init(
+        title: "20-Minute Stress Relief",
+        description: "Comprehensive stress reduction and emotional balance. Perfect for high-stress days, anxiety relief, or when you need substantial time to process emotions and find equilibrium.",
+        minutes: 20,
+        symbol: "timer",
+        audioFileName: nil,
+        hasAudio: false,
+        tags: ["Stress Relief", "Anxiety Reduction"]
+    ),
+    .init(
+        title: "30-Minute Inner Peace",
+        description: "Transformative meditation for profound inner transformation. Designed for experienced practitioners seeking deep spiritual connection, self-discovery, and lasting inner peace.",
+        minutes: 30,
+        symbol: "timer",
+        audioFileName: nil,
+        hasAudio: false,
+        tags: ["Spiritual Growth", "Self-Discovery"]
+    ),
 ]
 
 // MARK: - View
@@ -52,7 +87,7 @@ struct MeditationView: View {
                     ForEach(quickMeditations) { preset in
                         // Use direct destination variant to avoid any routing mismatch
                         NavigationLink {
-                            MeditationSessionView(duration: preset.minutes * 60)
+                            MeditationSessionView(preset: preset)
                         } label: {
                             MeditationRow(preset: preset)
                         }
@@ -74,56 +109,61 @@ private struct MeditationRow: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Icon with consistent styling across tabs
-            ZStack {
-                Circle().fill(preset.level.tint.opacity(0.15))
-                Image(systemName: preset.symbol)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(preset.level.tint)
-            }
-            .frame(width: 44, height: 44) // HIG minimum tap target
-            .accessibilityHidden(true)
+            // Content following HIG typography hierarchy - icons removed for more text space
+            VStack(alignment: .leading, spacing: 8) { // Increased from 4 to 8 for better HIG spacing
+                HStack(spacing: 8) {
+                    Text(preset.title)
+                        .font(.headline) // HIG standard for section titles
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    if preset.hasAudio {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                            .accessibilityLabel("Guided meditation with audio")
+                    }
+                }
 
-            // Content following HIG typography hierarchy
-            VStack(alignment: .leading, spacing: 4) {
-                Text(preset.title)
-                    .font(.headline) // HIG standard for section titles
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                Text("\(preset.minutes) min")
+                // Description text
+                Text(preset.description)
                     .font(.body) // HIG standard for main content
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                // Tags showing use cases
+                if !preset.tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(preset.tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption.weight(.medium))
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .background(Capsule().fill(.blue.opacity(0.12)))
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+                        .padding(.horizontal, 2)
+                    }
+                }
+                
+
             }
 
             Spacer()
-
-            // Level badge - consistent with other tabs
-            LevelBadge(level: preset.level)
-                .allowsHitTesting(false)
         }
         .padding(.vertical, 8) // 8pt grid system
-        .frame(minHeight: 52) // HIG preferred list row height
+        .frame(minHeight: 80) // Increased height for description and tags
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(preset.title). \(preset.minutes) minutes. \(preset.level.rawValue) level")
+        .accessibilityLabel("\(preset.title). \(preset.description)")
         .accessibilityHint("Tap to start meditation session")
     }
 }
 
-private struct LevelBadge: View {
-    let level: MeditationPreset.Level
 
-    var body: some View {
-        Text(level.rawValue)
-            .font(.caption.weight(.medium)) // Consistent with other badge styles
-            .foregroundStyle(level.tint)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
-            .background(Capsule().fill(level.tint.opacity(0.12))) // Consistent opacity
-            .accessibilityHidden(true) // Included in parent accessibility label
-    }
-}
 
 private struct SectionHeader: View {
     let title: String
@@ -168,11 +208,15 @@ private struct SectionHeader: View {
     }
 }
 
-#Preview("Level Badge Components") {
-    VStack(spacing: 20) {
-        ForEach(MeditationPreset.Level.allCases, id: \.self) { level in
-            LevelBadge(level: level)
+
+
+#Preview("Meditation Row with Description and Tags") {
+    NavigationStack {
+        List {
+            MeditationRow(preset: quickMeditations[0]) // 2-Minute
+            MeditationRow(preset: quickMeditations[2]) // 10-Minute Guided
+            MeditationRow(preset: quickMeditations[4]) // 20-Minute
         }
+        .listStyle(.insetGrouped)
     }
-    .padding()
 }

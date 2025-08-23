@@ -30,36 +30,21 @@ private struct NoiseRow: View {
     let noise: BackgroundNoise
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon with consistent styling across tabs
-            ZStack {
-                Circle().fill(noise.tint.opacity(0.15))
-                Image(systemName: noise.icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(noise.tint)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(noise.title)
+                .font(.headline) // HIG standard for section titles
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+
+            if !noise.summary.isEmpty {
+                Text(noise.summary)
+                    .font(.body) // HIG standard for main content
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(width: 44, height: 44) // HIG minimum tap target
-            .accessibilityHidden(true)
-
-            // Content following HIG typography hierarchy
-            VStack(alignment: .leading, spacing: 4) {
-                Text(noise.title)
-                    .font(.headline) // HIG standard for section titles
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                if !noise.summary.isEmpty {
-                    Text(noise.summary)
-                        .font(.body) // HIG standard for main content
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            Spacer()
-
-            // Status indicator - consistent with other tabs
+            
+            // Tag moved below description with proper HIG spacing
             if !noise.tags.isEmpty, let firstTag = noise.tags.first {
                 Text(firstTag.capitalized)
                     .font(.caption.weight(.medium))
@@ -69,8 +54,8 @@ private struct NoiseRow: View {
                     .background(Capsule().fill(noise.tint.opacity(0.12)))
             }
         }
-        .padding(.vertical, 8) // 8pt grid system
-        .frame(minHeight: 52) // HIG preferred list row height
+        .padding(.vertical, 12) // Increased padding for better spacing
+        .frame(minHeight: 72, alignment: .leading) // Increased height for more text space
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(noise.title). \(noise.summary)")

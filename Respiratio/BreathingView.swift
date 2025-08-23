@@ -28,46 +28,28 @@ private struct BreathingRow: View {
     let exercise: BreathingExercise
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon with consistent styling across tabs
-            ZStack {
-                Circle().fill(exercise.tint.opacity(0.15))
-                Image(systemName: exercise.symbol)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(exercise.tint)
-            }
-            .frame(width: 44, height: 44) // HIG minimum tap target
-            .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(exercise.title)
+                .font(.headline) // HIG standard for section titles
+                .foregroundStyle(.primary)
+                .lineLimit(1)
 
-            // Content following HIG typography hierarchy
-            VStack(alignment: .leading, spacing: 4) {
-                Text(exercise.title)
-                    .font(.headline) // HIG standard for section titles
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+            Text(exercise.description)
+                .font(.body) // HIG standard for main content
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
 
-                Text(exercise.subtitle)
-                    .font(.body) // HIG standard for main content
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer()
-
-            // Duration indicator - consistent with other tabs
-            Text("2 min")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(exercise.tint)
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(Capsule().fill(exercise.tint.opacity(0.12)))
+            Text(exercise.subtitle)
+                .font(.caption) // HIG standard for secondary text
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
-        .padding(.vertical, 8) // 8pt grid system
-        .frame(minHeight: 52) // HIG preferred list row height
+        .padding(.vertical, 12) // Increased padding for better spacing
+        .frame(minHeight: 72, alignment: .leading) // Increased height for more text space
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(exercise.title). \(exercise.subtitle)")
+        .accessibilityLabel("\(exercise.title). \(exercise.description)")
         .accessibilityHint("Tap to start breathing exercise")
     }
 }

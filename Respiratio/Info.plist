@@ -6,5 +6,19 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Amagro-bold.ttf</string>
+		<string>AnekGujarati-Regular.ttf</string>
+		<string>AnekGujarati-Bold.ttf</string>
+		<string>AnekGujarati-ExtraBold.ttf</string>
+		<string>AnekGujarati-ExtraLight.ttf</string>
+		<string>AnekGujarati-Light.ttf</string>
+		<string>AnekGujarati-Medium.ttf</string>
+		<string>AnekGujarati-SemiBold.ttf</string>
+		<string>AnekGujarati-Thin.ttf</string>
+	</array>
 </dict>
 </plist>

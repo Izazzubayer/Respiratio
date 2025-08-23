@@ -67,12 +67,31 @@ final class MeditationSessionModel: ObservableObject {
 
 struct MeditationSessionView: View {
     @StateObject private var model: MeditationSessionModel
+    @StateObject private var audioEngine = MeditationAudioEngine.shared
     @StateObject private var streak = StreakStore()
 
     @Environment(\.dismiss) private var dismiss
     @State private var showCongrats = false
+    @State private var showVolumeControls = false
+    
+    private let preset: MeditationPreset
 
+    init(preset: MeditationPreset) {
+        self.preset = preset
+        _model = .init(wrappedValue: MeditationSessionModel(duration: preset.minutes * 60))
+    }
+    
+    // Legacy initializer for compatibility
     init(duration: Int) {
+        self.preset = MeditationPreset(
+            title: "Meditation",
+            description: "A \(duration / 60)-minute meditation session for relaxation and focus.",
+            minutes: duration / 60,
+            symbol: "timer",
+            audioFileName: nil,
+            hasAudio: false,
+            tags: ["Custom Duration", "Focus", "Relaxation"]
+        )
         _model = .init(wrappedValue: MeditationSessionModel(duration: duration))
     }
 
@@ -83,44 +102,45 @@ struct MeditationSessionView: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             .ignoresSafeArea()
 
-            VStack(spacing: 28) {
+            VStack(spacing: 32) {
                 header
 
-                // Progress ring + countdown
+                // Clean, Apple HIG-compliant progress ring
                 ZStack {
+                    // Background ring - HIG standard sizing
                     Circle()
-                        .stroke(lineWidth: 18)
-                        .foregroundStyle(.quaternary)
-                        .frame(width: 260, height: 260)
+                        .stroke(Color(.systemGray5), lineWidth: 12)
+                        .frame(width: 200, height: 200)
 
+                    // Progress ring - clean single color
                     Circle()
-                        .trim(from: 0, to: model.finished ? 1 : model.progress)
-                        .stroke(
-                            AngularGradient(
-                                gradient: Gradient(colors: [.blue, .mint, .green]),
-                                center: .center
-                            ),
-                            style: StrokeStyle(lineWidth: 18, lineCap: .round, lineJoin: .round)
-                        )
+                        .trim(from: 0, to: currentProgress)
+                        .stroke(.blue, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .frame(width: 260, height: 260)
-                        .animation(.easeInOut(duration: 0.35), value: model.progress)
+                        .frame(width: 200, height: 200)
+                        .animation(.easeInOut(duration: 0.5), value: currentProgress)
                         .accessibilityHidden(true)
 
-                    VStack(spacing: 8) {
-                        Text(timeString(model.remaining))
-                            .font(.system(size: 56, weight: .semibold, design: .rounded))
+                    // Center content with proper visual hierarchy
+                    VStack(spacing: 6) {
+                        // Properly sized timer - HIG standard
+                        Text(currentTimeString)
+                            .font(.system(size: 28, weight: .medium, design: .default))
                             .monospacedDigit()
+                            .foregroundStyle(.primary)
                             .contentTransition(.numericText())
-                        Text(model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused"))
-                            .font(.callout)
+                        
+                        // Secondary status - HIG typography scale
+                        Text(currentStatusText)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
+                            .contentTransition(.opacity)
                     }
+                    .animation(.easeInOut(duration: 0.3), value: currentStatusText)
                 }
-                .padding(.top, 8)
 
-                controls
-                secondaryRow
+                // Simplified controls without speed control
+                simplifiedControls
 
                 Spacer()
             }
@@ -131,15 +151,10 @@ struct MeditationSessionView: View {
             ToolbarItem(placement: .topBarTrailing) { KeepAwakeToggle().hapticsOnTap(.selection) }
         }
         .onAppear {
-            model.start()
-            try? AVAudioSession.sharedInstance()
-                .setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            setupSession()
         }
         .onDisappear {
-            model.pause()
-            #if os(iOS)
-            UIApplication.shared.isIdleTimerDisabled = false   // make sure we re-enable autolock
-            #endif
+            cleanupSession()
         }
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
@@ -147,6 +162,18 @@ struct MeditationSessionView: View {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
                 showCongrats = true
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .meditationCompleted)) { _ in
+            model.stop()
+            _ = streak.registerCompletion()
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                showCongrats = true
+            }
+        }
+        .sheet(isPresented: $showVolumeControls) {
+            VolumeControlSheet(engine: audioEngine)
+                .presentationDetents([.height(300)])
+                .presentationDragIndicator(.visible)
         }
         // ✅ Dismiss order: Sheet first, THEN pop the session in onDismiss
         .sheet(isPresented: $showCongrats, onDismiss: {
@@ -162,39 +189,66 @@ struct MeditationSessionView: View {
 
     private var header: some View {
         HStack {
-            Label("Meditation", systemImage: "leaf.fill")
+            Label(preset.title, systemImage: preset.symbol)
                 .foregroundStyle(.primary)
                 .font(.headline)
             Spacer()
-            DurationPill(seconds: model.total)
+            HStack(spacing: 8) {
+                if preset.hasAudio {
+                    Button {
+                        showVolumeControls.toggle()
+                    } label: {
+                        Image(systemName: audioEngine.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                            .foregroundStyle(.blue)
+                    }
+                    .accessibilityLabel("Audio controls")
+                }
+//                DurationPill(seconds: model.total, hasAudio: preset.hasAudio)
+            }
         }
         .padding(.horizontal)
     }
 
-    private var controls: some View {
-        HStack(spacing: 16) {
-            Button {
-                model.isRunning ? model.pause() : model.start()
-            } label: {
-                Label(model.isRunning ? "Pause" : "Start",
-                      systemImage: model.isRunning ? "pause.fill" : "play.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
+    // Clean, simplified controls following Apple HIG
+    private var simplifiedControls: some View {
+        VStack(spacing: 24) {
+            // Primary transport controls - simple meditation timer
+            HStack(spacing: 20) {
+                // Main Play/Pause button - prominent and centered
+                Button {
+                    if preset.hasAudio {
+                        audioEngine.isPlaying ? audioEngine.pause() : audioEngine.play()
+                    } else {
+                        model.isRunning ? model.pause() : model.start()
+                    }
+                } label: {
+                    Label(currentPlayButtonText, systemImage: currentPlayButtonIcon)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44) // HIG minimum tap target
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .hapticsOnTap(.soft)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .hapticsOnTap(.soft)
-
-            Button(role: .destructive) { model.stop() } label: {
+            
+            // Secondary control - just Stop button
+            Button(role: .destructive) { 
+                if preset.hasAudio {
+                    audioEngine.stop()
+                }
+                model.stop()
+            } label: {
                 Label("Stop", systemImage: "stop.fill")
-                    .font(.headline)
+                    .font(.subheadline)
                     .frame(maxWidth: .infinity)
+                    .frame(height: 44) // HIG minimum tap target
             }
             .buttonStyle(.bordered)
-            .controlSize(.large)
+            .controlSize(.regular)
             .hapticsOnTap(.rigid)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 24) // HIG standard margins
     }
 
     private var secondaryRow: some View {
@@ -211,6 +265,81 @@ struct MeditationSessionView: View {
         .padding(.horizontal)
     }
 
+    // MARK: - Computed Properties
+    
+    private var currentProgress: Double {
+        if preset.hasAudio {
+            return audioEngine.progress
+        } else {
+            return model.finished ? 1 : model.progress
+        }
+    }
+    
+    // Removed - using single color now for cleaner HIG-compliant design
+    
+    private var currentTimeString: String {
+        if preset.hasAudio {
+            return timeString(Int(audioEngine.remainingTime))
+        } else {
+            return timeString(model.remaining)
+        }
+    }
+    
+    private var currentStatusText: String {
+        if preset.hasAudio {
+            if audioEngine.isPlaying {
+                return "Guided meditation"
+            } else if audioEngine.currentTime > 0 {
+                return "Paused"
+            } else {
+                return "Ready to begin"
+            }
+        } else {
+            return model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused")
+        }
+    }
+    
+    private var currentPlayButtonText: String {
+        if preset.hasAudio {
+            return audioEngine.isPlaying ? "Pause" : "Play"
+        } else {
+            return model.isRunning ? "Pause" : "Start"
+        }
+    }
+    
+    private var currentPlayButtonIcon: String {
+        if preset.hasAudio {
+            return audioEngine.isPlaying ? "pause.fill" : "play.fill"
+        } else {
+            return model.isRunning ? "pause.fill" : "play.fill"
+        }
+    }
+
+    // MARK: - Session Management
+    
+    private func setupSession() {
+        if preset.hasAudio, let audioFileName = preset.audioFileName {
+            audioEngine.loadMeditation(fileName: audioFileName, title: preset.title)
+        }
+        
+        model.start()
+        
+        // Configure audio session for ambient playback
+        try? AVAudioSession.sharedInstance()
+            .setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+    }
+    
+    private func cleanupSession() {
+        if preset.hasAudio {
+            audioEngine.stop()
+        }
+        model.pause()
+        
+        #if os(iOS)
+        UIApplication.shared.isIdleTimerDisabled = false
+        #endif
+    }
+
     // MARK: - Utils
 
     private func timeString(_ s: Int) -> String {
@@ -221,40 +350,46 @@ struct MeditationSessionView: View {
 
 // MARK: - Components
 
-private struct DurationPill: View {
-    let seconds: Int
-    var body: some View {
-        let m = max(1, seconds) / 60
-        HStack(spacing: 6) {
-            Image(systemName: "timer")
-            Text("\(m) min").font(.subheadline.weight(.semibold))
-        }
-        .padding(.vertical, 6).padding(.horizontal, 10)
-        .background(Capsule().fill(Color.blue.opacity(0.12)))
-        .foregroundStyle(.blue)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Duration \(m) minutes")
-    }
-}
+// private struct DurationPill: View {
+//     let seconds: Int
+//     let hasAudio: Bool
+    
+//     var body: some View {
+//         let m = max(1, seconds) / 60
+//         HStack(spacing: 6) {
+//             Image(systemName: hasAudio ? "waveform" : "timer")
+//             Text("\(m) min").font(.subheadline.weight(.semibold))
+//             if hasAudio {
+//                 Text("•")
+//                 Text("Guided").font(.caption.weight(.medium))
+//             }
+//         }
+//         .padding(.vertical, 6).padding(.horizontal, 10)
+//         .background(Capsule().fill(hasAudio ? Color.orange.opacity(0.12) : Color.blue.opacity(0.12)))
+//         .foregroundStyle(hasAudio ? .orange : .blue)
+//         .accessibilityElement(children: .combine)
+//         .accessibilityLabel("Duration \(m) minutes\(hasAudio ? ", guided meditation with audio" : "")")
+//     }
+// }
 
-private struct ToggleSoundButton: View {
-    @State private var muted = false
-    var body: some View {
-        Button {
-            muted.toggle()
-            #if os(iOS)
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            #endif
-        } label: {
-            Label(muted ? "Muted" : "Sound",
-                  systemImage: muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.regular)
-        .foregroundStyle(.primary)
-        .hapticsOnTap(.selection)
-    }
-}
+// private struct ToggleSoundButton: View {
+//     @State private var muted = false
+//     var body: some View {
+//         Button {
+//             muted.toggle()
+//             #if os(iOS)
+//             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+//             #endif
+//         } label: {
+//             Label(muted ? "Muted" : "Sound",
+//                   systemImage: muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+//         }
+//         .buttonStyle(.bordered)
+//         .controlSize(.regular)
+//         .foregroundStyle(.primary)
+//         .hapticsOnTap(.selection)
+//     }
+// }
 
 //private struct KeepAwakeToggle: View {
 //    @State private var keepAwake = true
@@ -271,6 +406,54 @@ private struct ToggleSoundButton: View {
 //    }
 //}
 
+// MARK: - Audio Components
+
+private struct VolumeControlSheet: View {
+    @ObservedObject var engine: MeditationAudioEngine
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Volume slider
+                VStack(spacing: 16) {
+                    HStack {
+                        Image(systemName: "speaker.fill")
+                            .foregroundStyle(.secondary)
+                        
+                        Slider(value: Binding(
+                            get: { engine.volume },
+                            set: { engine.volume = $0 }
+                        ), in: 0...1)
+                        .tint(.blue)
+                        
+                        Image(systemName: "speaker.wave.3.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Text("Volume: \(Int(engine.volume * 100))%")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                // Mute toggle
+                Toggle("Mute Audio", isOn: $engine.isMuted)
+                    .tint(.blue)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Audio Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Completion Sheet
 
 private struct CompletionSheet: View {
@@ -285,7 +468,7 @@ private struct CompletionSheet: View {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 32))
                         .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 6) { // Increased from 2 to 6 for better HIG spacing
                         Text("Great job!").font(.title3.weight(.semibold))
                         Text("Meditation complete").foregroundStyle(.secondary)
                     }

@@ -28,6 +28,16 @@ final class NoiseEngine: ObservableObject {
         }
     }
 
+    // MARK: Computed Properties for UI
+    var durationSeconds: TimeInterval? { 
+        selectedDuration.timeInterval 
+    }
+    
+    var progress: Double {
+        guard let total = durationSeconds, total > 0 else { return 0 }
+        return max(0, min(1, elapsed / total))
+    }
+    
     // MARK: Internal
     private var player: AVAudioPlayer?
     private var tickTimer: Timer?
