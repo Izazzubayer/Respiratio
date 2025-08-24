@@ -10,39 +10,28 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Main content area with smooth transitions
+                // Main content area with slide transitions and swipe gestures
                 ZStack {
-                    // Meditation View (Left)
+                    // Meditation View
                     if selectedTab == .meditation {
                         MeditationView()
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .leading).combined(with: .opacity),
-                                removal: .move(edge: .trailing).combined(with: .opacity)
-                            ))
+                            .transition(.move(edge: .leading))
                     }
                     
-                    // Breathing View (Center)
+                    // Breathing View
                     if selectedTab == .breathing {
                         BreathingView()
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)
-                            ))
+                            .transition(.move(edge: .trailing))
                     }
                     
-                    // Noise View (Right)
+                    // Noise View
                     if selectedTab == .noise {
                         BackgroundNoiseView()
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)
-                            ))
+                            .transition(.move(edge: .trailing))
                     }
                 }
-                .animation(
-                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.6),
-                    value: selectedTab
-                )
+                .animation(.easeInOut(duration: 0.3), value: selectedTab)
+
                 
                 // Custom navigation bar
                 NavBar(selectedTab: $selectedTab)

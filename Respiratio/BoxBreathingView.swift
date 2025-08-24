@@ -21,153 +21,90 @@ struct BoxBreathingView: View {
     // Single time source for continuous motion
     @State private var startDate: Date = Date()
     @State private var hapticEngine: CHHapticEngine?
-    @State private var lastHapticPhase: String = ""
-    @State private var currentTime: Double = 0
+    @State private var lastHapticPhase: String = "Inhale"
     
     // 16-second cycle (4s per phase)
     private let cycleDuration: Double = 16.0
     private let phaseDurationSeconds: Double = 4.0
     
     var body: some View {
-        ZStack {
-            // Background
-            Color(red: 0.21, green: 0.35, blue: 0.97)
-                .ignoresSafeArea()
+        TimelineView(.animation(minimumInterval: 1.0/60.0, paused: !isRunning)) { context in
+            let elapsed = isRunning ? context.date.timeIntervalSince(startDate) : 0
+            let t = elapsed.truncatingRemainder(dividingBy: cycleDuration)
+            let currentPhase = getCurrentPhase(t: t)
             
-            VStack(alignment: .leading, spacing: 15) {
-                HStack(spacing: 4) {
-                    Text("2 Minutes")
-                        .font(Font.custom("AnekGujarati", size: 12).weight(.medium))
-                        .foregroundColor(.white)
-                }
-                .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-                .background(Color(red: 0.36, green: 0.47, blue: 1))
-                .cornerRadius(999)
+            GeometryReader { geometry in
+                let size = min(geometry.size.width, geometry.size.height)
+                let boxSize: CGFloat = size * 0.6
+                let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                let ballRadius: CGFloat = 12
+                let cornerRadius: CGFloat = 16
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Box Breathing")
-                        .font(Font.custom("Amagro-Bold", size: 24))
-                        .lineSpacing(26)
-                        .foregroundColor(.white)
-                    Text("Inhale, hold, exhale, and hold again. Repeat this for 2 minutes to calm the mind & sharpen focus.")
-                        .font(Font.custom("AnekGujarati-Regular", size: 18))
-                        .foregroundColor(.white)
-                }
-            }
-            .frame(width: 376)
-            .offset(x: 0, y: -330.50)
-            
-            VStack(alignment: .leading, spacing: 15) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(getCurrentPhase(t: getCurrentTime()))
-                        .font(Font.custom("Amagro-Bold", size: 24))
-                        .lineSpacing(26)
-                        .foregroundColor(.white)
-                        .animation(.easeInOut(duration: 0.3), value: getCurrentPhase(t: getCurrentTime()))
-                    Text(getPhaseDescription(getCurrentPhase(t: getCurrentTime()), t: getCurrentTime()))
-                        .font(Font.custom("AnekGujarati-Regular", size: 18))
-                        .foregroundColor(.white)
-                        .animation(.easeInOut(duration: 0.3), value: getPhaseDescription(getCurrentPhase(t: getCurrentTime()), t: getCurrentTime()))
-                }
-                .frame(width: 185)
-            }
-            .offset(x: -0.50, y: 0.50)
-            
-            Rectangle()
-                .foregroundColor(.clear)
-                .frame(width: 352, height: 343)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .inset(by: -4)
-                        .stroke(Color(red: 1, green: 1, blue: 1).opacity(0.50), lineWidth: 4)
+                // Calculate ball position on rounded square path
+                let ballPosition = calculateBallPositionOnSquare(
+                    t: t, 
+                    center: center, 
+                    boxSize: boxSize, 
+                    cornerRadius: cornerRadius
                 )
-                .offset(x: 0, y: -0.50)
-            
-            Rectangle()
-                .foregroundColor(.clear)
-                .frame(width: 101 * getPhaseProgress(), height: 8)
-                .background(.white)
-                .cornerRadius(100)
-                .offset(x: -113.50, y: -176)
-                .animation(.easeInOut(duration: 0.1), value: getPhaseProgress())
-            
-            Ellipse()
-                .foregroundColor(.clear)
-                .frame(width: 45, height: 45)
-                .background(.white)
-                .offset(x: -54.50, y: -176.50)
-                .shadow(
-                    color: Color(red: 0.20, green: 0.31, blue: 0.82, opacity: 1), radius: 8, y: 4
-                )
-            
-            HStack(spacing: 18) {
-                HStack(spacing: 4) {
-                    Text("Play")
-                        .font(Font.custom("AnekGujarati-Regular", size: 16))
-                        .foregroundColor(.white)
-                }
-                .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
-                .frame(width: 111)
-                .background(Color(red: 0.17, green: 0.28, blue: 0.79))
-                .cornerRadius(12)
                 
-                HStack(spacing: 4) {
-                    Text("Stop")
-                        .font(Font.custom("AnekGujarati-Regular", size: 16))
-                        .foregroundColor(.white)
+                ZStack {
+                    // Background
+                    Color(red: 0.21, green: 0.35, blue: 0.97)
+                        .ignoresSafeArea()
+                    
+                    // Progress path around box (no background)
+                    ProgressBoxPath(
+                        boxSize: boxSize,
+                        cornerRadius: cornerRadius,
+                        progress: t / cycleDuration
+                    )
+                    .stroke(tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    
+                    // Moving ball
+                    Circle()
+                        .fill(tint)
+                        .frame(width: ballRadius * 2, height: ballRadius * 2)
+                        .position(ballPosition)
+                        .shadow(color: tint.opacity(0.6), radius: 8)
+                    
+                    // Center labels
+                    VStack(spacing: 12) {
+                        Text(currentPhase.uppercased())
+                            .font(.title.weight(.bold))
+                            .foregroundStyle(tint)
+                        
+                        Text(getPhaseDescription(currentPhase, t: t))
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+                    .multilineTextAlignment(.center)
                 }
-                .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
-                .frame(width: 111)
-                .background(Color(red: 0.84, green: 0.36, blue: 0.28))
-                .cornerRadius(12)
+                .onChange(of: currentPhase) { _, newPhase in
+                    if isRunning && newPhase != lastHapticPhase {
+                        triggerHapticForPhase(newPhase)
+                    }
+                }
             }
-            .offset(x: 0, y: 238)
-        }
-        .frame(width: 430, height: 932)
-        .onChange(of: phase) { _, newPhase in
-            if isRunning && newPhase != lastHapticPhase {
-                triggerHapticForPhase(newPhase.rawValue)
+            .onChange(of: isRunning) { _, running in
+                if running {
+                    startDate = context.date
+                } else {
+                    hapticEngine?.stop(completionHandler: nil)
+                }
             }
         }
         .onAppear {
             setupHapticEngine()
             startDate = Date()
-            startTimer()
         }
         .onDisappear {
             hapticEngine?.stop(completionHandler: nil)
-            stopTimer()
         }
         .accessibilityLabel(accessibilityText)
     }
     
     // MARK: - Helper Methods
-    
-    /// Get current time for UI updates
-    private func getCurrentTime() -> Double {
-        return currentTime
-    }
-    
-    /// Start timer for UI updates
-    private func startTimer() {
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            if isRunning {
-                currentTime = Date().timeIntervalSince(startDate).truncatingRemainder(dividingBy: cycleDuration)
-            }
-        }
-    }
-    
-    /// Stop timer
-    private func stopTimer() {
-        // Timer will be invalidated when view disappears
-    }
-    
-    /// Get current phase progress (0.0 to 1.0)
-    private func getPhaseProgress() -> Double {
-        let phaseTime = currentTime.truncatingRemainder(dividingBy: phaseDurationSeconds)
-        return phaseTime / phaseDurationSeconds
-    }
     
     /// Calculate ball position on rounded square path
     private func calculateBallPositionOnSquare(t: Double, center: CGPoint, boxSize: CGFloat, cornerRadius: CGFloat) -> CGPoint {

@@ -74,7 +74,7 @@ struct NavBar: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 128)
-        .cornerRadius(0)
+        .cornerRadius(32)
         .clipped() // Clip any overflow
         .ignoresSafeArea(.all, edges: .bottom)
     }

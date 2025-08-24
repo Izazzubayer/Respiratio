@@ -10,6 +10,11 @@ enum NoiseLiveActivityManager {
     private static var activity: Activity<NoiseActivityAttributes>?
 
     static func start(title: String, remaining: Int?) {
+        #if DEBUG
+        print("Live Activities disabled in debug builds")
+        return
+        #endif
+        
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { 
             print("Live Activities not enabled")
             return 
@@ -34,6 +39,11 @@ enum NoiseLiveActivityManager {
     }
 
     static func update(title: String, remaining: Int?, isPlaying: Bool) {
+        #if DEBUG
+        print("Live Activities disabled in debug builds")
+        return
+        #endif
+        
         guard let activity else { 
             print("No active Live Activity to update")
             return 
@@ -42,7 +52,7 @@ enum NoiseLiveActivityManager {
         let state = NoiseActivityAttributes.ContentState(
             title: title,
             remainingSeconds: remaining,
-            isPlaying: isPlaying
+            isPlaying: true
         )
         
         Task { 
@@ -51,6 +61,11 @@ enum NoiseLiveActivityManager {
     }
 
     static func end() {
+        #if DEBUG
+        print("Live Activities disabled in debug builds")
+        return
+        #endif
+        
         guard let activity else { 
             print("No active Live Activity to end")
             return 
@@ -63,6 +78,10 @@ enum NoiseLiveActivityManager {
     }
     
     static var isActive: Bool {
-        activity != nil
+        #if DEBUG
+        return false
+        #else
+        return activity != nil
+        #endif
     }
 }

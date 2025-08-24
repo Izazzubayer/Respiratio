@@ -23,7 +23,7 @@ struct MeditationPreset: Identifiable, Hashable {
 private let quickMeditations: [MeditationPreset] = [
     .init(
         title: "2-Minute Quick Reset",
-        description: "Perfect for a quick mental refresh during busy days. Ideal for office breaks, before meetings, or when you need to reset your mind quickly.",
+        description: "Perfect for a quick mental refresh during busy days. Ideal for office breaks, before meetings, or when you need to reset your mind.",
         minutes: 2,
         symbol: "timer",
         audioFileName: nil,
@@ -32,7 +32,7 @@ private let quickMeditations: [MeditationPreset] = [
     ),
     .init(
         title: "5-Minute Focus Boost",
-        description: "Enhance concentration and mental clarity. Great for students before studying, professionals before important tasks, or anyone needing to sharpen their focus.",
+        description: "Enhance concentration and mental clarity. Great for students before studying, professionals before important tasks, or to sharpen their focus.",
         minutes: 5,
         symbol: "timer",
         audioFileName: nil,
@@ -55,7 +55,7 @@ private let quickMeditations: [MeditationPreset] = [
         symbol: "timer",
         audioFileName: nil,
         hasAudio: false,
-        tags: ["Deep Relaxation", "Evening Wind-Down"]
+        tags: ["Deep Relaxation", "Wind-Down"]
     ),
     .init(
         title: "20-Minute Stress Relief",
@@ -66,15 +66,15 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: false,
         tags: ["Stress Relief", "Anxiety Reduction"]
     ),
-    .init(
-        title: "30-Minute Inner Peace",
-        description: "Transformative meditation for profound inner transformation. Designed for experienced practitioners seeking deep spiritual connection, self-discovery, and lasting inner peace.",
-        minutes: 30,
-        symbol: "timer",
-        audioFileName: nil,
-        hasAudio: false,
-        tags: ["Spiritual Growth", "Self-Discovery", "Monk Mode"]
-    ),
+    // .init(
+    //     title: "30-Minute Inner Peace",
+    //     description: "Transformative meditation for profound inner transformation. Designed for experienced practitioners seeking deep spiritual connection, self-discovery, and lasting inner peace.",
+    //     minutes: 30,
+    //     symbol: "timer",
+    //     audioFileName: nil,
+    //     hasAudio: false,
+    //     tags: ["Spiritual Growth", "Self-Discovery", "Monk Mode"]
+    // ),
 ]
 
 // MARK: - View
@@ -173,31 +173,23 @@ private struct MeditationCard: View {
             // Card background
             RoundedRectangle(cornerRadius: 20)
                 .fill(cardColors[colorIndex % cardColors.count])
-                .frame(height: 180)
             
-            HStack {
+            HStack(spacing: 16) {
                 // Content side
-                VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack {
-                            Text(preset.title)
-                                .font(.custom("AnekGujarati-Bold", size: 22))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                            
-                            if preset.hasAudio {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.white)
-                                    .opacity(0.8)
-                            }
-                        }
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(preset.title)
+                            .font(.custom("AnekGujarati-Bold", size: 22))
+                            .foregroundColor(.white)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                         
                         Text(preset.description)
                             .font(.custom("AnekGujarati-Regular", size: 14))
-                            .lineSpacing(2)
+                            .lineSpacing(1)
                             .foregroundColor(.white)
-                            .lineLimit(3)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     
                     // Tags
@@ -217,9 +209,7 @@ private struct MeditationCard: View {
                         }
                     }
                 }
-                .frame(maxWidth: 205, alignment: .leading)
-                
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
                 
                 // Vector illustration side - blended with card background
                 Image(illustrationName)
@@ -228,6 +218,7 @@ private struct MeditationCard: View {
                     .frame(width: 136, height: 136)
             }
             .padding(.horizontal, 16)
+            .padding(.vertical, 16)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
