@@ -73,7 +73,7 @@ struct NavBar: View {
             .offset(x: 0, y: -9.5)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 146)
+        .frame(height: 128)
         .cornerRadius(0)
         .clipped() // Clip any overflow
         .ignoresSafeArea(.all, edges: .bottom)
