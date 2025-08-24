@@ -7,20 +7,30 @@ struct BackgroundNoiseView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(noises, id: \.self) { noise in
-                    NavigationLink(value: noise) {
-                        NoiseRow(noise: noise)
-                            .padding(.vertical, 6)
+            ZStack {
+                // Dark background to match the app theme
+                Color(red: 0.21, green: 0.35, blue: 0.97)
+                    .ignoresSafeArea()
+                
+                List {
+                    ForEach(noises, id: \.self) { noise in
+                        NavigationLink(value: noise) {
+                            NoiseRow(noise: noise)
+                                .padding(.vertical, 6)
+                        }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden) // Remove white background
+                .background(Color.clear) // Ensure transparent background
             }
-            .listStyle(.insetGrouped)
             .navigationTitle("Background Noise")
             // Push the full player page
             .navigationDestination(for: BackgroundNoise.self) { noise in
                 NoiseSessionView(noise: noise)
             }
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .tabBar)
         }
     }
 }

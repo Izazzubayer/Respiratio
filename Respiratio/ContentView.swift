@@ -4,21 +4,46 @@ struct ContentView: View {
     @State private var selectedTab: NavTab = .meditation
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Main content area
-            Group {
-                switch selectedTab {
-                case .meditation:
-                    MeditationView()
-                case .breathing:
-                    BreathingView()
-                case .noise:
-                    BackgroundNoiseView()
-                }
-            }
+        ZStack {
+            // Global dark background
+            Color(red: 0.21, green: 0.35, blue: 0.97)
+                .ignoresSafeArea()
             
-            // Custom navigation bar
-            NavBar(selectedTab: $selectedTab)
+            VStack(spacing: 0) {
+                // Main content area with smooth transitions
+                ZStack {
+                    // Meditation View (Left)
+                    if selectedTab == .meditation {
+                        MeditationView()
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .leading),
+                                removal: .move(edge: .leading)
+                            ))
+                    }
+                    
+                    // Breathing View (Center)
+                    if selectedTab == .breathing {
+                        BreathingView()
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing),
+                                removal: .move(edge: .leading)
+                            ))
+                    }
+                    
+                    // Noise View (Right)
+                    if selectedTab == .noise {
+                        BackgroundNoiseView()
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing),
+                                removal: .move(edge: .trailing)
+                            ))
+                    }
+                }
+                .animation(.easeInOut(duration: 0.4), value: selectedTab)
+                
+                // Custom navigation bar
+                NavBar(selectedTab: $selectedTab)
+            }
         }
         .ignoresSafeArea(.all, edges: .bottom)
     }

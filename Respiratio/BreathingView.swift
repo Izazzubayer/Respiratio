@@ -6,20 +6,30 @@ struct BreathingView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    ForEach(items) { exercise in
-                        NavigationLink {
-                            BreathingSessionView(exercise: exercise, totalSeconds: 120)
-                        } label: {
-                            BreathingRow(exercise: exercise)
+            ZStack {
+                // Dark background to match the app theme
+                Color(red: 0.21, green: 0.35, blue: 0.97)
+                    .ignoresSafeArea()
+                
+                List {
+                    Section {
+                        ForEach(items) { exercise in
+                            NavigationLink {
+                                BreathingSessionView(exercise: exercise, totalSeconds: 120)
+                            } label: {
+                                BreathingRow(exercise: exercise)
+                            }
                         }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden) // Remove white background
+                .background(Color.clear) // Ensure transparent background
             }
-            .listStyle(.insetGrouped)
             .navigationTitle("Breathing")
             .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .tabBar)
         }
     }
 }

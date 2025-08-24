@@ -39,6 +39,11 @@ struct NavBar: View {
     
     var body: some View {
         ZStack {
+            // Full background color - extend beyond frame bounds
+            Color(red: 0.17, green: 0.28, blue: 0.79)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(.all, edges: .bottom)
+            
             // Sliding blue pill background
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color(red: 0.21, green: 0.35, blue: 0.97))
@@ -46,10 +51,10 @@ struct NavBar: View {
                 .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
                     .interpolatingSpring(
-                        mass: 0.8,
-                        stiffness: 120,
-                        damping: 18,
-                        initialVelocity: 0
+                        mass: 0.6,
+                        stiffness: 150,
+                        damping: 20,
+                        initialVelocity: 0.3
                     ),
                     value: selectedTab
                 )
@@ -73,12 +78,10 @@ struct NavBar: View {
             .offset(x: 0, y: -9.5)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 123)
-        .background(
-            Color(red: 0.17, green: 0.28, blue: 0.79)
-        )
-        .cornerRadius(32)
-        .ignoresSafeArea(edges: .bottom)
+        .frame(height: 146)
+        .cornerRadius(0)
+        .clipped() // Clip any overflow
+        .ignoresSafeArea(.all, edges: .bottom)
     }
 }
 
@@ -90,21 +93,24 @@ private struct NavBarItem: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                // Icon with smooth opacity transition
+                // Icon with smooth opacity transition and scale
                 Image(tab.iconName)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .foregroundColor(.white)
                     .opacity(isSelected ? 1.0 : 0.6)
+                    .scaleEffect(isSelected ? 1.1 : 1.0)
                     .animation(.easeInOut(duration: 0.3), value: isSelected)
                 
-                // Label with smooth opacity transition
+                // Label with smooth opacity transition and weight change
                 Text(tab.rawValue)
-                    .font(.custom("AnekGujarati-Medium", size: 16))
+                    .font(.custom(isSelected ? "AnekGujarati-SemiBold" : "AnekGujarati-Medium", size: 16))
                     .foregroundColor(.white)
                     .opacity(isSelected ? 1.0 : 0.6)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8) // Prevent text truncation
+                    .fixedSize(horizontal: false, vertical: true) // Ensure text fits
                     .animation(.easeInOut(duration: 0.3), value: isSelected)
             }
             .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))

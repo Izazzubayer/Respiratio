@@ -121,6 +121,8 @@ struct MeditationView: View {
                 }
             }
             .navigationBarHidden(true)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .tabBar)
         }
     }
 }
