@@ -16,8 +16,8 @@ struct ContentView: View {
                     if selectedTab == .meditation {
                         MeditationView()
                             .transition(.asymmetric(
-                                insertion: .move(edge: .leading),
-                                removal: .move(edge: .leading)
+                                insertion: .move(edge: .leading).combined(with: .opacity),
+                                removal: .move(edge: .trailing).combined(with: .opacity)
                             ))
                     }
                     
@@ -25,8 +25,8 @@ struct ContentView: View {
                     if selectedTab == .breathing {
                         BreathingView()
                             .transition(.asymmetric(
-                                insertion: .move(edge: .trailing),
-                                removal: .move(edge: .leading)
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)
                             ))
                     }
                     
@@ -34,12 +34,15 @@ struct ContentView: View {
                     if selectedTab == .noise {
                         BackgroundNoiseView()
                             .transition(.asymmetric(
-                                insertion: .move(edge: .trailing),
-                                removal: .move(edge: .trailing)
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)
                             ))
                     }
                 }
-                .animation(.easeInOut(duration: 0.4), value: selectedTab)
+                .animation(
+                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.6),
+                    value: selectedTab
+                )
                 
                 // Custom navigation bar
                 NavBar(selectedTab: $selectedTab)

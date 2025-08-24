@@ -50,12 +50,7 @@ struct NavBar: View {
                 .frame(width: tabWidth, height: 76)
                 .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
-                    .interpolatingSpring(
-                        mass: 0.6,
-                        stiffness: 150,
-                        damping: 20,
-                        initialVelocity: 0.3
-                    ),
+                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.5),
                     value: selectedTab
                 )
             
@@ -93,15 +88,14 @@ private struct NavBarItem: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                // Icon with smooth opacity transition and scale
+                // Icon with smooth opacity transition
                 Image(tab.iconName)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .foregroundColor(.white)
                     .opacity(isSelected ? 1.0 : 0.6)
-                    .scaleEffect(isSelected ? 1.1 : 1.0)
-                    .animation(.easeInOut(duration: 0.3), value: isSelected)
+                    .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
                 
                 // Label with smooth opacity transition and weight change
                 Text(tab.rawValue)
@@ -111,7 +105,7 @@ private struct NavBarItem: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8) // Prevent text truncation
                     .fixedSize(horizontal: false, vertical: true) // Ensure text fits
-                    .animation(.easeInOut(duration: 0.3), value: isSelected)
+                    .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
             }
             .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
             .frame(width: 122)
