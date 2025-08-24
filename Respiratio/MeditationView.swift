@@ -28,7 +28,7 @@ private let quickMeditations: [MeditationPreset] = [
         symbol: "timer",
         audioFileName: nil,
         hasAudio: false,
-        tags: ["Quick Reset", "Pre-Meeting", "Mental Refresh"]
+        tags: ["Reset", "Meeting", "Refresh"]
     ),
     .init(
         title: "5-Minute Focus Boost",
@@ -37,7 +37,7 @@ private let quickMeditations: [MeditationPreset] = [
         symbol: "timer",
         audioFileName: nil,
         hasAudio: false,
-        tags: ["Focus", "Study Prep", "Work Focus"]
+        tags: ["Focus", "Study", "Work"]
     ),
     .init(
         title: "10-Minute Guided Journey",
@@ -73,7 +73,7 @@ private let quickMeditations: [MeditationPreset] = [
         symbol: "timer",
         audioFileName: nil,
         hasAudio: false,
-        tags: ["Spiritual Growth", "Self-Discovery"]
+        tags: ["Spiritual Growth", "Self-Discovery", "Monk Mode"]
     ),
 ]
 
@@ -82,84 +82,155 @@ private let quickMeditations: [MeditationPreset] = [
 struct MeditationView: View {
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    ForEach(quickMeditations) { preset in
-                        // Use direct destination variant to avoid any routing mismatch
-                        NavigationLink {
-                            MeditationSessionView(preset: preset)
-                        } label: {
-                            MeditationRow(preset: preset)
+            ZStack {
+                // Background gradient
+                Color(red: 0.21, green: 0.35, blue: 0.97)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Fixed Header section
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("MEDITATION")
+                            .font(.custom("Amagro-Bold", size: 24))
+                            .foregroundColor(.white)
+                        
+                        Text("Choose how you'd like to meditate today")
+                            .font(.custom("AnekGujarati-Regular", size: 18))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
+                    
+                    // Scrollable Meditation cards
+                    ScrollView {
+                        LazyVStack(spacing: 24) {
+                            ForEach(Array(quickMeditations.enumerated()), id: \.element.id) { index, preset in
+                                NavigationLink {
+                                    MeditationSessionView(preset: preset)
+                                } label: {
+                                    MeditationCard(preset: preset, colorIndex: index)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
-                        // IMPORTANT: Do NOT add any gestures/haptic modifiers to this row
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 32)
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Meditation")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarHidden(true)
         }
     }
 }
 
 // MARK: - Components
 
-private struct MeditationRow: View {
+private struct MeditationCard: View {
     let preset: MeditationPreset
+    let colorIndex: Int
+    
+    // Map meditation to vector illustration (sequence: vector-4, 3, 2, 1, 0...)
+    private var illustrationName: String {
+        switch colorIndex {
+        case 0: return "vector-4" // 2-Minute Quick Reset
+        case 1: return "vector-3" // 5-Minute Focus Boost
+        case 2: return "vector-2" // 10-Minute Guided Journey
+        case 3: return "vector-1" // 15-Minute Deep Calm
+        case 4: return "vector-0" // 20-Minute Stress Relief
+        default: return "vector-1" // fallback
+        }
+    }
+    
+    // Color scheme for each card
+    private var cardColors: [Color] {
+        [
+            Color(red: 0.56, green: 0.59, blue: 0.99), // Blue
+            Color(red: 0.98, green: 0.43, blue: 0.35), // Orange
+            Color(red: 0.25, green: 0.25, blue: 0.31), // Dark gray
+            Color(red: 0.42, green: 0.70, blue: 0.56), // Green
+            Color(red: 0.95, green: 0.74, blue: 0.43), // Yellow
+            Color(red: 0.56, green: 0.59, blue: 0.99)  // Blue (repeat)
+        ]
+    }
+    
+    private var tagColors: [Color] {
+        [
+            Color(red: 0.45, green: 0.49, blue: 0.94), // Blue tags
+            Color(red: 0.84, green: 0.36, blue: 0.28), // Orange tags
+            Color(red: 0.19, green: 0.19, blue: 0.19), // Dark tags
+            Color(red: 0.34, green: 0.56, blue: 0.44), // Green tags
+            Color(red: 0.83, green: 0.63, blue: 0.31), // Yellow tags
+            Color(red: 0.45, green: 0.49, blue: 0.94)  // Blue tags (repeat)
+        ]
+    }
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Content following HIG typography hierarchy - icons removed for more text space
-            VStack(alignment: .leading, spacing: 8) { // Increased from 4 to 8 for better HIG spacing
-                HStack(spacing: 8) {
-                    Text(preset.title)
-                        .font(.headline) // HIG standard for section titles
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    
-                    if preset.hasAudio {
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
-                            .accessibilityLabel("Guided meditation with audio")
-                    }
-                }
-
-                // Description text
-                Text(preset.description)
-                    .font(.body) // HIG standard for main content
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                // Tags showing use cases
-                if !preset.tags.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(preset.tags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.caption.weight(.medium))
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 8)
-                                    .background(Capsule().fill(.blue.opacity(0.12)))
-                                    .foregroundStyle(.blue)
+        ZStack {
+            // Card background
+            RoundedRectangle(cornerRadius: 20)
+                .fill(cardColors[colorIndex % cardColors.count])
+                .frame(height: 180)
+            
+            HStack {
+                // Content side
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(preset.title)
+                                .font(.custom("AnekGujarati-Bold", size: 22))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            
+                            if preset.hasAudio {
+                                Image(systemName: "speaker.wave.2.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.white)
+                                    .opacity(0.8)
                             }
                         }
-                        .padding(.horizontal, 2)
+                        
+                        Text(preset.description)
+                            .font(.custom("AnekGujarati-Regular", size: 14))
+                            .lineSpacing(2)
+                            .foregroundColor(.white)
+                            .lineLimit(3)
+                    }
+                    
+                    // Tags
+                    if !preset.tags.isEmpty {
+                        HStack(spacing: 8) {
+                            ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
+                                Text(tag)
+                                    .font(.custom("AnekGujarati-Medium", size: 10))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .background(
+                                        Capsule()
+                                            .fill(tagColors[colorIndex % tagColors.count])
+                                    )
+                            }
+                        }
                     }
                 }
+                .frame(maxWidth: 205, alignment: .leading)
                 
-
+                Spacer()
+                
+                // Vector illustration side - blended with card background
+                Image(illustrationName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 136, height: 136)
             }
-
-            Spacer()
+            .padding(.horizontal, 16)
         }
-        .padding(.vertical, 8) // 8pt grid system
-        .frame(minHeight: 80) // Increased height for description and tags
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(preset.title). \(preset.description)")
-        .accessibilityHint("Tap to start meditation session")
+        .accessibilityHint("Tap to start \(preset.minutes) minute meditation session")
     }
 }
 
@@ -197,26 +268,33 @@ private struct SectionHeader: View {
     MeditationView()
 }
 
-#Preview("Meditation Row Component") {
-    NavigationStack {
-        List {
-            MeditationRow(preset: quickMeditations[0])
-            MeditationRow(preset: quickMeditations[2])
-            MeditationRow(preset: quickMeditations[4])
+#Preview("Meditation Card Component") {
+    ZStack {
+        Color(red: 0.21, green: 0.35, blue: 0.97)
+            .ignoresSafeArea()
+        
+        VStack(spacing: 16) {
+            MeditationCard(preset: quickMeditations[0], colorIndex: 0)
+            MeditationCard(preset: quickMeditations[2], colorIndex: 2)
+            MeditationCard(preset: quickMeditations[4], colorIndex: 4)
         }
-        .listStyle(.insetGrouped)
+        .padding(.horizontal, 24)
     }
 }
 
-
-
-#Preview("Meditation Row with Description and Tags") {
-    NavigationStack {
-        List {
-            MeditationRow(preset: quickMeditations[0]) // 2-Minute
-            MeditationRow(preset: quickMeditations[2]) // 10-Minute Guided
-            MeditationRow(preset: quickMeditations[4]) // 20-Minute
+#Preview("All Meditation Cards") {
+    ZStack {
+        Color(red: 0.21, green: 0.35, blue: 0.97)
+            .ignoresSafeArea()
+        
+        ScrollView {
+            LazyVStack(spacing: 24) {
+                ForEach(Array(quickMeditations.enumerated()), id: \.element.id) { index, preset in
+                    MeditationCard(preset: preset, colorIndex: index)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
         }
-        .listStyle(.insetGrouped)
     }
 }

@@ -1,26 +1,26 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var selectedTab: NavTab = .meditation
+    
     var body: some View {
-        TabView {
-            MeditationView()
-                .tabItem { 
-                    Label("Meditation", systemImage: "leaf.fill")
+        VStack(spacing: 0) {
+            // Main content area
+            Group {
+                switch selectedTab {
+                case .meditation:
+                    MeditationView()
+                case .breathing:
+                    BreathingView()
+                case .noise:
+                    BackgroundNoiseView()
                 }
-                .accessibilityLabel("Meditation tab")
-
-            BreathingView()
-                .tabItem { 
-                    Label("Breathing", systemImage: "wind") 
-                }
-                .accessibilityLabel("Breathing exercises tab")
-
-            BackgroundNoiseView()
-                .tabItem { 
-                    Label("Noise", systemImage: "music.note") 
-                }
-                .accessibilityLabel("Background noise tab")
+            }
+            
+            // Custom navigation bar
+            NavBar(selectedTab: $selectedTab)
         }
+        .ignoresSafeArea(.all, edges: .bottom)
     }
 }
 

@@ -1,7 +1,6 @@
 //
 //  SplashScreenView.swift
 //  Respiratio
-//
 //  Apple HIG-compliant splash screen with fade animations
 //
 
@@ -51,8 +50,18 @@ struct SplashScreenView: View {
 // MARK: - App Root View
 
 struct AppRootView: View {
+    @State private var hasSeenWelcome = false
+    
     var body: some View {
-        WelcomeView()
+        if hasSeenWelcome {
+            ContentView()
+        } else {
+            WelcomeView(onGetStarted: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    hasSeenWelcome = true
+                }
+            })
+        }
     }
 }
 
