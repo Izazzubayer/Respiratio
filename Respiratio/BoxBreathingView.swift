@@ -6,17 +6,15 @@
 //
 
 import SwiftUI
-// import DotLottie  // Temporarily commented out until package is properly linked
+import DotLottie
 
 struct BoxBreathingView: View {
-    @State private var animationProgress: CGFloat = 0.0
     @State private var isAnimating = false
-    @State private var animationTimer: Timer?
     @State private var sessionTime: TimeInterval = 0.0
     @State private var sessionTimer: Timer?
     
-    // Lottie animation reference (temporarily disabled)
-    // @State private var breathingAnimation: DotLottieAnimation?
+    // Lottie animation reference
+    @State private var breathingAnimation: DotLottieAnimation?
     
     var body: some View {
         ZStack() {
@@ -42,21 +40,11 @@ struct BoxBreathingView: View {
             .frame(width: 376)
             .offset(x: 0, y: -300)
 
-            // Breathing Box with Custom Animation (Lottie temporarily disabled)
-            ZStack {
-                // Breathing Box Outline
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 8)
+            // Lottie Animation Area
+            if let breathingAnimation = breathingAnimation {
+                breathingAnimation.view()
                     .frame(width: 280, height: 280)
-
-                // Custom moving circle (your existing animation)
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 30, height: 30)
-                    .shadow(color: Color(hex: "#5A79FF"), radius: 8)
-                    .offset(breathingCircleOffset)
             }
-            .offset(x: 0, y: 0)
 
             HStack(spacing: 18) {
                 Button(action: {
@@ -94,78 +82,25 @@ struct BoxBreathingView: View {
         .frame(width: 430, height: 932)
         .background(Color(red: 0.10, green: 0.17, blue: 0.48))
         .onAppear {
-            // setupLottieAnimation()  // Temporarily disabled
+            setupLottieAnimation()
         }
         .onDisappear {
             stopBreathingAnimation()
         }
     }
 
-    // MARK: - Lottie Animation Setup (Temporarily Disabled)
+    // MARK: - Lottie Animation Setup
     
-    /*
     private func setupLottieAnimation() {
-        // Try to load Lottie animation from bundle
-        // If it doesn't exist, fall back to custom animation
-        if let _ = Bundle.main.path(forResource: "box_breathing", ofType: "lottie") {
-            breathingAnimation = DotLottieAnimation(
-                fileName: "box_breathing",
-                config: AnimationConfig(autoplay: false, loop: true)
-            )
-        } else if let _ = Bundle.main.path(forResource: "box_breathing", ofType: "json") {
-            breathingAnimation = DotLottieAnimation(
-                fileName: "box_breathing",
-                config: AnimationConfig(autoplay: false, loop: true)
-            )
-        }
-        // If no Lottie file exists, breathingAnimation remains nil and custom animation is used
-    }
-    */
-
-    // MARK: - Breathing Animation Logic (Custom Fallback)
-
-    private var breathingCircleOffset: CGSize {
-        let boxWidth: CGFloat = 280
-        let boxHeight: CGFloat = 280
-        let cornerRadius: CGFloat = 12
-
-        // Calculate the path around the rounded rectangle
-        let progress = animationProgress
-
-        // Define the path segments (4 sides of the box)
-        let segment1 = 0.25 // Top edge
-        let segment2 = 0.5  // Right edge
-        let segment3 = 0.75 // Bottom edge
-        let segment4 = 1.0  // Left edge
-
-        let x: CGFloat
-        let y: CGFloat
-
-        if progress <= segment1 {
-            // Top edge: left to right
-            let t = progress / segment1
-            x = -boxWidth/2 + cornerRadius + (boxWidth - 2*cornerRadius) * t
-            y = -boxHeight/2
-        } else if progress <= segment2 {
-            // Right edge: top to bottom
-            let t = (progress - segment1) / (segment2 - segment1)
-            x = boxWidth/2
-            y = -boxHeight/2 + cornerRadius + (boxHeight - 2*cornerRadius) * t
-        } else if progress <= segment3 {
-            // Bottom edge: right to left
-            let t = (progress - segment2) / (segment3 - segment2)
-            x = boxWidth/2 - cornerRadius - (boxWidth - 2*cornerRadius) * t
-            y = boxHeight/2
-        } else {
-            // Left edge: bottom to top
-            let t = (progress - segment3) / (segment4 - segment3)
-            x = -boxWidth/2
-            y = boxHeight/2 - cornerRadius - (boxHeight - 2*cornerRadius) * t
-        }
-
-        return CGSize(width: x, height: y)
+        // Load Lottie animation from local file
+        breathingAnimation = DotLottieAnimation(
+            fileName: "Box Breathing V6",
+            config: AnimationConfig(autoplay: false, loop: true)
+        )
     }
 
+    // MARK: - Breathing Animation Logic
+    
     private func startBreathingAnimation() {
         isAnimating = true
 
@@ -179,24 +114,19 @@ struct BoxBreathingView: View {
             }
         }
 
-        // Use custom breathing animation (Lottie temporarily disabled)
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
-            withAnimation(.linear(duration: 1.0/60.0)) {
-                animationProgress += 0.00104 // 1.0 / (16 seconds * 60 FPS)
-
-                // Reset to 0 when we reach 1.0 to create the loop
-                if animationProgress >= 1.0 {
-                    animationProgress = 0.0
-                }
-            }
+        // Start the Lottie animation
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.play()
         }
     }
 
     private func pauseBreathingAnimation() {
         isAnimating = false
         
-        animationTimer?.invalidate()
-        animationTimer = nil
+        // Pause the Lottie animation
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.pause()
+        }
         
         sessionTimer?.invalidate()
         sessionTimer = nil
@@ -205,14 +135,15 @@ struct BoxBreathingView: View {
     private func stopBreathingAnimation() {
         isAnimating = false
         
-        animationTimer?.invalidate()
-        animationTimer = nil
+        // Stop the Lottie animation
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.stop()
+        }
         
         sessionTimer?.invalidate()
         sessionTimer = nil
 
         withAnimation(.easeInOut(duration: 0.3)) {
-            animationProgress = 0.0
             sessionTime = 0.0
         }
     }

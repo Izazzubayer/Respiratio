@@ -9,17 +9,10 @@
 /* Begin PBXBuildFile section */
 		826D986F2E58E75200E4461A /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D986E2E58E75200E4461A /* WidgetKit.framework */; };
 		826D98712E58E75200E4461A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D98702E58E75200E4461A /* SwiftUI.framework */; };
-		826D98822E58E75400E4461A /* NoiseLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A7B78C8A2E5CAF38006A567F /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = A7B78C892E5CAF38006A567F /* DotLottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		826D98802E58E75400E4461A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 82B0FE562E56350900EF7760 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 826D986B2E58E75100E4461A;
-			remoteInfo = NoiseLiveActivityExtension;
-		};
 		82B0FE6D2E56350B00EF7760 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 82B0FE562E56350900EF7760 /* Project object */;
@@ -35,20 +28,6 @@
 			remoteInfo = Respiratio;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		826D98872E58E75400E4461A /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				826D98822E58E75400E4461A /* NoiseLiveActivityExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		826D986C2E58E75100E4461A /* NoiseLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoiseLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +106,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A7B78C8A2E5CAF38006A567F /* DotLottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,18 +191,17 @@
 				82B0FE5A2E56350900EF7760 /* Sources */,
 				82B0FE5B2E56350900EF7760 /* Frameworks */,
 				82B0FE5C2E56350900EF7760 /* Resources */,
-				826D98872E58E75400E4461A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				826D98812E58E75400E4461A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				82B0FE602E56350900EF7760 /* Respiratio */,
 			);
 			name = Respiratio;
 			packageProductDependencies = (
+				A7B78C892E5CAF38006A567F /* DotLottie */,
 			);
 			productName = Respiratio;
 			productReference = 82B0FE5E2E56350900EF7760 /* Respiratio.app */;
@@ -388,11 +367,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		826D98812E58E75400E4461A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
-			targetProxy = 826D98802E58E75400E4461A /* PBXContainerItemProxy */;
-		};
 		82B0FE6E2E56350B00EF7760 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 82B0FE5D2E56350900EF7760 /* Respiratio */;
@@ -813,6 +787,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A7B78C892E5CAF38006A567F /* DotLottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
+			productName = DotLottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 82B0FE562E56350900EF7760 /* Project object */;
 }
