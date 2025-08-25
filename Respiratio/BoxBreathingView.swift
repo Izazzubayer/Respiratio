@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DotLottie
 
 struct BoxBreathingView: View {
     @State private var animationProgress: CGFloat = 0.0
@@ -13,6 +14,9 @@ struct BoxBreathingView: View {
     @State private var animationTimer: Timer?
     @State private var sessionTime: TimeInterval = 0.0
     @State private var sessionTimer: Timer?
+    
+    // Lottie animation reference
+    @State private var breathingAnimation: DotLottieAnimation?
     
     var body: some View {
         ZStack() {
@@ -37,23 +41,29 @@ struct BoxBreathingView: View {
             }
             .frame(width: 376)
             .offset(x: 0, y: -300)
-            
-            // Breathing Box with Moving Circle
+
+            // Breathing Box with Lottie Animation
             ZStack {
                 // Breathing Box Outline
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.white.opacity(0.5), lineWidth: 8)
                     .frame(width: 280, height: 280)
-                
-                // Moving Circle with Trail
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 30, height: 30)
-                    .shadow(color: Color(hex: "#5A79FF"), radius: 8)
-                    .offset(breathingCircleOffset)
+
+                // Lottie Animation (replace the custom circle)
+                if let breathingAnimation = breathingAnimation {
+                    breathingAnimation.view()
+                        .frame(width: 280, height: 280)
+                } else {
+                    // Fallback: Custom moving circle (your existing animation)
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 30, height: 30)
+                        .shadow(color: Color(hex: "#5A79FF"), radius: 8)
+                        .offset(breathingCircleOffset)
+                }
             }
             .offset(x: 0, y: 0)
-            
+
             HStack(spacing: 18) {
                 Button(action: {
                     if isAnimating {
@@ -71,7 +81,7 @@ struct BoxBreathingView: View {
                     .background(Color(red: 0.17, green: 0.28, blue: 0.79))
                     .cornerRadius(12)
                 }
-                
+
                 Button(action: {
                     stopBreathingAnimation()
                 }) {
@@ -89,30 +99,52 @@ struct BoxBreathingView: View {
         }
         .frame(width: 430, height: 932)
         .background(Color(red: 0.10, green: 0.17, blue: 0.48))
+        .onAppear {
+            setupLottieAnimation()
+        }
         .onDisappear {
             stopBreathingAnimation()
         }
     }
+
+    // MARK: - Lottie Animation Setup
     
-    // MARK: - Breathing Animation Logic
-    
+    private func setupLottieAnimation() {
+        // Try to load Lottie animation from bundle
+        // If it doesn't exist, fall back to custom animation
+        if let _ = Bundle.main.path(forResource: "box_breathing", ofType: "lottie") {
+            breathingAnimation = DotLottieAnimation(
+                fileName: "box_breathing",
+                config: AnimationConfig(autoplay: false, loop: true)
+            )
+        } else if let _ = Bundle.main.path(forResource: "box_breathing", ofType: "json") {
+            breathingAnimation = DotLottieAnimation(
+                fileName: "box_breathing",
+                config: AnimationConfig(autoplay: false, loop: true)
+            )
+        }
+        // If no Lottie file exists, breathingAnimation remains nil and custom animation is used
+    }
+
+    // MARK: - Breathing Animation Logic (Custom Fallback)
+
     private var breathingCircleOffset: CGSize {
         let boxWidth: CGFloat = 280
         let boxHeight: CGFloat = 280
         let cornerRadius: CGFloat = 12
-        
+
         // Calculate the path around the rounded rectangle
         let progress = animationProgress
-        
+
         // Define the path segments (4 sides of the box)
         let segment1 = 0.25 // Top edge
-        let segment2 = 0.5  // Right edge  
+        let segment2 = 0.5  // Right edge
         let segment3 = 0.75 // Bottom edge
         let segment4 = 1.0  // Left edge
-        
+
         let x: CGFloat
         let y: CGFloat
-        
+
         if progress <= segment1 {
             // Top edge: left to right
             let t = progress / segment1
@@ -134,13 +166,13 @@ struct BoxBreathingView: View {
             x = -boxWidth/2
             y = boxHeight/2 - cornerRadius - (boxHeight - 2*cornerRadius) * t
         }
-        
+
         return CGSize(width: x, height: y)
     }
-    
+
     private func startBreathingAnimation() {
         isAnimating = true
-        
+
         // Start session timer for 2 minutes
         sessionTime = 0.0
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -150,125 +182,52 @@ struct BoxBreathingView: View {
                 return
             }
         }
-        
-        // Start breathing animation timer with dynamic speed
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/120.0, repeats: true) { _ in
-            withAnimation(.linear(duration: 1.0/120.0)) {
-                // Calculate dynamic speed based on position
-                let dynamicSpeed = calculateDynamicSpeed(progress: animationProgress)
-                animationProgress += dynamicSpeed
-                
-                // Reset to 0 when we reach 1.0 to create the loop
-                if animationProgress >= 1.0 {
-                    animationProgress = 0.0
+
+        // Use Lottie animation if available, otherwise use custom animation
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.play()
+        } else {
+            // Start custom breathing animation timer
+            animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
+                withAnimation(.linear(duration: 1.0/60.0)) {
+                    animationProgress += 0.00104 // 1.0 / (16 seconds * 60 FPS)
+
+                    // Reset to 0 when we reach 1.0 to create the loop
+                    if animationProgress >= 1.0 {
+                        animationProgress = 0.0
+                    }
                 }
             }
         }
     }
-    
-    private func calculateDynamicSpeed(progress: CGFloat) -> CGFloat {
-        let baseSpeed: CGFloat = 0.00052 // Base speed for 120Hz (1.0 / (16 seconds * 120 FPS))
-        
-        // Calculate which edge we're on and how far along it
-        let segment = getCurrentSegment(progress: progress)
-        let segmentProgress = getSegmentProgress(progress: progress, segment: segment)
-        
-        // Apply edge slowdown effect
-        let edgeSlowdown = calculateEdgeSlowdown(segmentProgress: segmentProgress)
-        
-        // Add breathing rhythm variation (0-120Hz equivalent)
-        let breathingVariation = sin(progress * 8 * .pi) * 0.0001 // Subtle breathing rhythm
-        
-        // Add corner slowdown
-        let cornerSlowdown = calculateCornerSlowdown(progress: progress)
-        
-        // Combine all speed factors
-        let finalSpeed = baseSpeed * (1.0 - edgeSlowdown - cornerSlowdown) + breathingVariation
-        
-        return max(finalSpeed, 0.0001) // Ensure minimum speed
-    }
-    
-    private func getCurrentSegment(progress: CGFloat) -> Int {
-        if progress <= 0.25 { return 0 }      // Top edge
-        else if progress <= 0.5 { return 1 }  // Right edge
-        else if progress <= 0.75 { return 2 } // Bottom edge
-        else { return 3 }                     // Left edge
-    }
-    
-    private func getSegmentProgress(progress: CGFloat, segment: Int) -> CGFloat {
-        let segmentStart: CGFloat
-        let segmentEnd: CGFloat
-        
-        switch segment {
-        case 0: // Top edge
-            segmentStart = 0.0
-            segmentEnd = 0.25
-        case 1: // Right edge
-            segmentStart = 0.25
-            segmentEnd = 0.5
-        case 2: // Bottom edge
-            segmentStart = 0.5
-            segmentEnd = 0.75
-        case 3: // Left edge
-            segmentStart = 0.75
-            segmentEnd = 1.0
-        default:
-            return 0.0
-        }
-        
-        return (progress - segmentStart) / (segmentEnd - segmentStart)
-    }
-    
-    private func calculateEdgeSlowdown(segmentProgress: CGFloat) -> CGFloat {
-        // Slow down movement near the edges (corners) of each segment
-        let edgeWidth: CGFloat = 0.15 // 15% of each edge is slower
-        
-        if segmentProgress <= edgeWidth {
-            // Start of edge - slow down
-            let t = segmentProgress / edgeWidth
-            return 0.6 * (1.0 - t) // 60% slowdown at start
-        } else if segmentProgress >= (1.0 - edgeWidth) {
-            // End of edge - slow down
-            let t = (segmentProgress - (1.0 - edgeWidth)) / edgeWidth
-            return 0.6 * t // 60% slowdown at end
-        } else {
-            // Middle of edge - normal speed
-            return 0.0
-        }
-    }
-    
-    private func calculateCornerSlowdown(progress: CGFloat) -> CGFloat {
-        // Additional slowdown at the exact corners
-        let cornerRegions: [CGFloat] = [0.0, 0.25, 0.5, 0.75, 1.0]
-        let cornerWidth: CGFloat = 0.02 // 2% around each corner
-        
-        for corner in cornerRegions {
-            let distance = abs(progress - corner)
-            if distance < cornerWidth {
-                // Maximum slowdown at corners
-                let t = distance / cornerWidth
-                return 0.8 * (1.0 - t) // 80% slowdown at exact corners
-            }
-        }
-        
-        return 0.0
-    }
-    
+
     private func pauseBreathingAnimation() {
         isAnimating = false
-        animationTimer?.invalidate()
-        animationTimer = nil
+        
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.pause()
+        } else {
+            animationTimer?.invalidate()
+            animationTimer = nil
+        }
+        
         sessionTimer?.invalidate()
         sessionTimer = nil
     }
-    
+
     private func stopBreathingAnimation() {
         isAnimating = false
-        animationTimer?.invalidate()
-        animationTimer = nil
+        
+        if let breathingAnimation = breathingAnimation {
+            breathingAnimation.stop()
+        } else {
+            animationTimer?.invalidate()
+            animationTimer = nil
+        }
+        
         sessionTimer?.invalidate()
         sessionTimer = nil
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             animationProgress = 0.0
             sessionTime = 0.0
