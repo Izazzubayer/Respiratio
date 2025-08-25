@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import DotLottie
+// import DotLottie  // Temporarily commented out until package is properly linked
 
 struct BoxBreathingView: View {
     @State private var animationProgress: CGFloat = 0.0
@@ -15,8 +15,8 @@ struct BoxBreathingView: View {
     @State private var sessionTime: TimeInterval = 0.0
     @State private var sessionTimer: Timer?
     
-    // Lottie animation reference
-    @State private var breathingAnimation: DotLottieAnimation?
+    // Lottie animation reference (temporarily disabled)
+    // @State private var breathingAnimation: DotLottieAnimation?
     
     var body: some View {
         ZStack() {
@@ -42,25 +42,19 @@ struct BoxBreathingView: View {
             .frame(width: 376)
             .offset(x: 0, y: -300)
 
-            // Breathing Box with Lottie Animation
+            // Breathing Box with Custom Animation (Lottie temporarily disabled)
             ZStack {
                 // Breathing Box Outline
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.white.opacity(0.5), lineWidth: 8)
                     .frame(width: 280, height: 280)
 
-                // Lottie Animation (replace the custom circle)
-                if let breathingAnimation = breathingAnimation {
-                    breathingAnimation.view()
-                        .frame(width: 280, height: 280)
-                } else {
-                    // Fallback: Custom moving circle (your existing animation)
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 30, height: 30)
-                        .shadow(color: Color(hex: "#5A79FF"), radius: 8)
-                        .offset(breathingCircleOffset)
-                }
+                // Custom moving circle (your existing animation)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 30, height: 30)
+                    .shadow(color: Color(hex: "#5A79FF"), radius: 8)
+                    .offset(breathingCircleOffset)
             }
             .offset(x: 0, y: 0)
 
@@ -100,15 +94,16 @@ struct BoxBreathingView: View {
         .frame(width: 430, height: 932)
         .background(Color(red: 0.10, green: 0.17, blue: 0.48))
         .onAppear {
-            setupLottieAnimation()
+            // setupLottieAnimation()  // Temporarily disabled
         }
         .onDisappear {
             stopBreathingAnimation()
         }
     }
 
-    // MARK: - Lottie Animation Setup
+    // MARK: - Lottie Animation Setup (Temporarily Disabled)
     
+    /*
     private func setupLottieAnimation() {
         // Try to load Lottie animation from bundle
         // If it doesn't exist, fall back to custom animation
@@ -125,6 +120,7 @@ struct BoxBreathingView: View {
         }
         // If no Lottie file exists, breathingAnimation remains nil and custom animation is used
     }
+    */
 
     // MARK: - Breathing Animation Logic (Custom Fallback)
 
@@ -183,19 +179,14 @@ struct BoxBreathingView: View {
             }
         }
 
-        // Use Lottie animation if available, otherwise use custom animation
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.play()
-        } else {
-            // Start custom breathing animation timer
-            animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
-                withAnimation(.linear(duration: 1.0/60.0)) {
-                    animationProgress += 0.00104 // 1.0 / (16 seconds * 60 FPS)
+        // Use custom breathing animation (Lottie temporarily disabled)
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
+            withAnimation(.linear(duration: 1.0/60.0)) {
+                animationProgress += 0.00104 // 1.0 / (16 seconds * 60 FPS)
 
-                    // Reset to 0 when we reach 1.0 to create the loop
-                    if animationProgress >= 1.0 {
-                        animationProgress = 0.0
-                    }
+                // Reset to 0 when we reach 1.0 to create the loop
+                if animationProgress >= 1.0 {
+                    animationProgress = 0.0
                 }
             }
         }
@@ -204,12 +195,8 @@ struct BoxBreathingView: View {
     private func pauseBreathingAnimation() {
         isAnimating = false
         
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.pause()
-        } else {
-            animationTimer?.invalidate()
-            animationTimer = nil
-        }
+        animationTimer?.invalidate()
+        animationTimer = nil
         
         sessionTimer?.invalidate()
         sessionTimer = nil
@@ -218,12 +205,8 @@ struct BoxBreathingView: View {
     private func stopBreathingAnimation() {
         isAnimating = false
         
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.stop()
-        } else {
-            animationTimer?.invalidate()
-            animationTimer = nil
-        }
+        animationTimer?.invalidate()
+        animationTimer = nil
         
         sessionTimer?.invalidate()
         sessionTimer = nil
