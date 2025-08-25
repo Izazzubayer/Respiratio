@@ -56,6 +56,18 @@ struct NoiseSessionView: View {
         }
     }
     
+    // MARK: - Helper Functions
+    
+    private func tintColor(for noise: BackgroundNoise) -> Color {
+        switch noise.title {
+        case "White Noise": return .blue
+        case "Brown Noise": return .brown
+        case "Theta Wave": return .purple
+        case "Beta Wave": return .yellow
+        default: return .blue
+        }
+    }
+    
     // MARK: - Description Section
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -74,8 +86,8 @@ struct NoiseSessionView: View {
                             .font(.caption.weight(.medium))
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .background(Capsule().fill(noise.tint.opacity(0.12)))
-                            .foregroundStyle(noise.tint)
+                            .background(Capsule().fill(tintColor(for: noise).opacity(0.12)))
+                            .foregroundStyle(tintColor(for: noise))
                     }
                     Spacer()
                 }

@@ -6,32 +6,23 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Global dark background
-            Color(hex: "#1A2B7C")
+            Color(red: 0.102, green: 0.168, blue: 0.486)
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Main content area with slide transitions and swipe gestures
-                ZStack {
-                    // Meditation View
-                    if selectedTab == .meditation {
-                        MeditationView()
-                            .transition(.move(edge: .leading))
-                    }
+                // Main content area with smooth tab transitions
+                TabView(selection: $selectedTab) {
+                    MeditationView()
+                        .tag(NavTab.meditation)
                     
-                    // Breathing View
-                    if selectedTab == .breathing {
-                        BreathingView()
-                            .transition(.move(edge: .trailing))
-                    }
+                    BreathingView()
+                        .tag(NavTab.breathing)
                     
-                    // Noise View
-                    if selectedTab == .noise {
-                        BackgroundNoiseView()
-                            .transition(.move(edge: .trailing))
-                    }
+                    BackgroundNoiseView()
+                        .tag(NavTab.noise)
                 }
-                .animation(.easeInOut(duration: 0.3), value: selectedTab)
-
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 
                 // Custom navigation bar
                 NavBar(selectedTab: $selectedTab)

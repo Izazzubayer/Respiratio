@@ -96,7 +96,7 @@ struct MeditationView: View {
                         
                         Text("Choose how you'd like to meditate today")
                             .font(.custom("AnekGujarati-Regular", size: 18))
-                            .foregroundColor(.white)
+                            .foregroundColor(.white.opacity(0.3))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
@@ -179,7 +179,7 @@ private struct MeditationCard: View {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(preset.title)
-                            .font(.custom("AnekGujarati-Bold", size: 22))
+                            .font(.custom("AnekGujarati-Bold", size: 20))
                             .foregroundColor(.white)
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)

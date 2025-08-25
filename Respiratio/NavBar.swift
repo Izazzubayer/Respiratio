@@ -47,10 +47,10 @@ struct NavBar: View {
             // Sliding blue pill background
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color(hex: "#1A2B7C"))
-                .frame(width: tabWidth, height: 76)
+                .frame(width: tabWidth, height: 82)
                 .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
-                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.5),
+                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.3),
                     value: selectedTab
                 )
             
@@ -61,7 +61,9 @@ struct NavBar: View {
                         tab: tab,
                         isSelected: selectedTab == tab
                     ) {
-                        selectedTab = tab
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            selectedTab = tab
+                        }
                         
                         // Haptic feedback
                         let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
@@ -95,6 +97,7 @@ private struct NavBarItem: View {
                     .frame(width: 32, height: 32)
                     .foregroundColor(.white)
                     .opacity(isSelected ? 1.0 : 0.6)
+                    .scaleEffect(isSelected ? 1.1 : 1.0)
                     .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
                 
                 // Label with smooth opacity transition and weight change
@@ -131,7 +134,11 @@ private struct NavBarItem: View {
 #Preview("All Nav States") {
     VStack(spacing: 20) {
         ForEach(NavTab.allCases, id: \.self) { tab in
-            NavBar(selectedTab: .constant(tab))
+            NavBarItem(
+                tab: tab,
+                isSelected: true,
+                action: {}
+            )
         }
     }
     .background(Color.gray.opacity(0.1))
