@@ -46,7 +46,7 @@ struct NavBar: View {
             
             // Sliding blue pill background
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color(red: 0.21, green: 0.35, blue: 0.97))
+                .fill(Color(hex: "#1A2B7C"))
                 .frame(width: tabWidth, height: 76)
                 .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
@@ -74,7 +74,7 @@ struct NavBar: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 128)
-        .cornerRadius(32)
+        .cornerRadius(0)
         .clipped() // Clip any overflow
         .ignoresSafeArea(.all, edges: .bottom)
     }

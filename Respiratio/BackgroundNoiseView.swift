@@ -9,7 +9,7 @@ struct BackgroundNoiseView: View {
         NavigationStack {
             ZStack {
                 // Dark background to match the app theme
-                Color(red: 0.21, green: 0.35, blue: 0.97)
+                Color(hex: "#1A2B7C")
                     .ignoresSafeArea()
                 
                 List {

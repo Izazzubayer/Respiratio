@@ -54,7 +54,7 @@ struct WelcomeView: View {
                 onGetStarted()
             }) {
                 HStack {
-                    Text("Get Started")
+                    Text("Continue")
                 }
                 .font(.custom("AnekGujarati-SemiBold", size: 18))
                 .foregroundColor(.white)

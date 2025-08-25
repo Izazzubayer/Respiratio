@@ -120,15 +120,8 @@ struct BreathingSessionView: View {
 
                 // Use custom visualizations for specific breathing techniques
                 if model.exercise.title == BreathingExercise.box.title {
-                    BoxBreathingView(
-                        phase: model.currentPhase.kind,
-                        phaseDuration: model.currentPhase.seconds,
-                        secondsLeft: model.phaseRemaining,
-                        tint: model.exercise.tint,
-                        isRunning: model.isRunning,
-                        phaseIndex: model.phaseIndex
-                    )
-                    .frame(width: 280, height: 280)
+                    BoxBreathingView()
+                        .frame(width: 280, height: 280)
                 } else if model.exercise.title == BreathingExercise.fourSevenEight.title {
                     TriangleBreathingView(
                         phase: model.currentPhase.kind,
