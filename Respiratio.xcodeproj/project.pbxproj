@@ -309,6 +309,9 @@
 			);
 			mainGroup = 82B0FE552E56350900EF7760;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 82B0FE5F2E56350900EF7760 /* Products */;
 			projectDirPath = "";
@@ -799,6 +802,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LottieFiles/dotlottie-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 82B0FE562E56350900EF7760 /* Project object */;
 }
