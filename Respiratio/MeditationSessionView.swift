@@ -97,59 +97,130 @@ struct MeditationSessionView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground),
-                                    Color(.secondarySystemBackground)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            .ignoresSafeArea()
+            // Beautiful dark blue background matching box breathing aesthetics
+            Color(red: 0.10, green: 0.17, blue: 0.48)
+                .ignoresSafeArea()
 
-            VStack(spacing: 32) {
-                header
-
-                // Clean, Apple HIG-compliant progress ring
-                ZStack {
-                    // Background ring - HIG standard sizing
-                    Circle()
-                        .stroke(Color(.systemGray5), lineWidth: 12)
-                        .frame(width: 200, height: 200)
-
-                    // Progress ring - clean single color
-                    Circle()
-                        .trim(from: 0, to: currentProgress)
-                        .stroke(.blue, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 200, height: 200)
-                        .animation(.easeInOut(duration: 0.5), value: currentProgress)
-                        .accessibilityHidden(true)
-
-                    // Center content with proper visual hierarchy
-                    VStack(spacing: 6) {
-                        // Properly sized timer - HIG standard
-                        Text(currentTimeString)
-                            .font(.system(size: 28, weight: .medium, design: .default))
-                            .monospacedDigit()
-                            .foregroundStyle(.primary)
-                            .contentTransition(.numericText())
-                        
-                        // Secondary status - HIG typography scale
-                        Text(currentStatusText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .contentTransition(.opacity)
+            VStack(spacing: 0) {
+                // Custom Back Button - positioned at the top
+                HStack {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .medium))
+                            Text("Back")
+                                .font(Font.custom("Anek Gujarati", size: 16))
+                        }
+                        .foregroundColor(.white)
                     }
-                    .animation(.easeInOut(duration: 0.3), value: currentStatusText)
+                    .padding(.leading, 16)
+                    .padding(.top, 16)
+                    
+                    Spacer()
                 }
-
-                // Simplified controls without speed control
-                simplifiedControls
-
-                Spacer()
+                
+                // Main Content
+                VStack(spacing: 24) {
+                    // Header section matching box breathing style
+                    VStack(alignment: .leading, spacing: 15) {
+                        HStack(spacing: 4) {
+                            Text("\(preset.minutes) Minutes")
+                                .font(Font.custom("Anek Gujarati", size: 12).weight(.medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                        .background(Color(red: 0.36, green: 0.47, blue: 1))
+                        .cornerRadius(999)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(preset.title)
+                                .font(Font.custom("Amagro", size: 24).weight(.bold))
+                                .lineSpacing(26)
+                                .foregroundColor(.white)
+                            Text(preset.description)
+                                .font(Font.custom("Anek Gujarati", size: 18))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .frame(width: 376)
+                    .offset(x: 0, y: -50)
+                    
+                    // Beautiful meditation visualization area
+                    VStack(spacing: 16) {
+                        ZStack {
+                            // Meditation circle outline (matching box breathing aesthetics)
+                            Circle()
+                                .stroke(Color.teal, lineWidth: 3)
+                                .frame(width: 280, height: 280)
+                            
+                            // Progress ring with beautiful animation
+                            Circle()
+                                .trim(from: 0, to: currentProgress)
+                                .stroke(Color.white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .frame(width: 280, height: 280)
+                                .animation(.easeInOut(duration: 0.5), value: currentProgress)
+                            
+                            // Center content with meditation aesthetics
+                            VStack(spacing: 12) {
+                                // Beautiful timer display
+                                Text(currentTimeString)
+                                    .font(Font.custom("Amagro", size: 32).weight(.bold))
+                                    .foregroundColor(.white)
+                                    .monospacedDigit()
+                                
+                                // Status text
+                                Text(currentStatusText)
+                                    .font(Font.custom("Anek Gujarati", size: 18))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        }
+                        .frame(width: 280, height: 280)
+                        
+                        // Control buttons matching box breathing style
+                        HStack(spacing: 18) {
+                            Button(action: {
+                                if model.isRunning {
+                                    model.pause()
+                                } else {
+                                    model.start()
+                                }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Text(model.isRunning ? "Pause" : "Play")
+                                        .font(Font.custom("Anek Gujarati", size: 16))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(EdgeInsets(top: 12, leading: 48, bottom: 12, trailing: 48))
+                                .background(Color(red: 0.17, green: 0.28, blue: 0.79))
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                            }
+                            
+                            Button(action: {
+                                model.stop()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Text("Stop")
+                                        .font(Font.custom("Anek Gujarati", size: 16))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(EdgeInsets(top: 12, leading: 48, bottom: 12, trailing: 48))
+                                .background(Color(red: 0.84, green: 0.36, blue: 0.28))
+                                .cornerRadius(12)
+                            }
+                        }
+                        .offset(x: 0, y: 50)
+                    }
+                }
+                .frame(width: 430, height: 932)
             }
-            .padding(.top, 8)
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { KeepAwakeToggle().hapticsOnTap(.selection) }
-        }
+        .navigationBarHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .tabBar)
         .onAppear {
             setupSession()
         }

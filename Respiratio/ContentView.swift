@@ -6,7 +6,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Global dark background
-            Color(red: 0.102, green: 0.168, blue: 0.486)
+            Color(hex: "#1A2B7C")
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -21,7 +21,6 @@ struct ContentView: View {
                     BackgroundNoiseView()
                         .tag(NavTab.noise)
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 
                 // Custom navigation bar

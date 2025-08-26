@@ -96,7 +96,7 @@ struct MeditationView: View {
                         
                         Text("Choose how you'd like to meditate today")
                             .font(.custom("AnekGujarati-Regular", size: 18))
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(.white.opacity(0.6))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)

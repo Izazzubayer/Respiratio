@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import DotLottie
 import CoreHaptics
+import DotLottie
 
 struct BoxBreathingView: View {
     @State private var isAnimating = false
@@ -16,8 +16,6 @@ struct BoxBreathingView: View {
     @State private var breathingPhase: BreathingPhase = .inhale
     @State private var phaseTimer: Timer?
     @State private var hapticEngine: CHHapticEngine?
-    
-    // Lottie animation reference
     @State private var breathingAnimation: DotLottieAnimation?
     
     // Simple, reliable haptic system
@@ -40,108 +38,158 @@ struct BoxBreathingView: View {
             }
         }
     }
-
+    
     var body: some View {
         ZStack() {
-            VStack(alignment: .leading, spacing: 15) {
-                HStack(spacing: 4) {
-                    Text("2 Minutes")
-                        .font(Font.custom("Anek Gujarati", size: 12).weight(.medium))
+            // Custom Back Button with reduced opacity
+            VStack {
+                HStack {
+                    Button(action: {
+                        // This will trigger the back navigation
+                        // The actual navigation is handled by the parent view
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .medium))
+                            Text("Back")
+                                .font(Font.custom("Anek Gujarati", size: 16))
+                        }
                         .foregroundColor(.white)
+                        .opacity(0.0) // Completely invisible but still functional
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 16)
+                    
+                    Spacer()
                 }
-                .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-                .background(Color(red: 0.36, green: 0.47, blue: 1))
-                .cornerRadius(999)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Box Breathing")
-                        .font(Font.custom("Amagro", size: 24).weight(.bold))
-                        .lineSpacing(26)
-                        .foregroundColor(.white)
-                    Text("Inhale, hold, exhale, and hold again. Repeat this for 2 minutes to calm the mind & sharpen focus.")
-                        .font(Font.custom("Anek Gujarati", size: 18))
-                        .foregroundColor(.white)
-                }
+                Spacer()
             }
-            .frame(width: 376)
-            .offset(x: 0, y: -300)
-
-            // Lottie Animation Area
-            VStack(spacing: 16) {
-                if let breathingAnimation = breathingAnimation {
-                    breathingAnimation.view()
-                        .frame(width: 280, height: 280)
+            
+                VStack(alignment: .leading, spacing: 15) {
+                    HStack(spacing: 4) {
+                        Text("2 Minutes")
+                            .font(Font.custom("Anek Gujarati", size: 12).weight(.medium))
+                            .foregroundColor(.white)
+                    }
+                    .padding(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                    .background(Color(red: 0.36, green: 0.47, blue: 1))
+                    .cornerRadius(999)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Box Breathing")
+                            .font(Font.custom("Amagro", size: 24).weight(.bold))
+                            .lineSpacing(26)
+                            .foregroundColor(.white)
+                        Text("Inhale, hold, exhale, and hold again. Repeat this for 2 minutes to calm the mind & sharpen focus.")
+                            .font(Font.custom("Anek Gujarati", size: 18))
+                            .foregroundColor(.white)
+                    }
                 }
+            .frame(width: 376)
+            .offset(x: 0, y: -250)
+
+                         // Lottie Animation Area
+             VStack(spacing: 16) {
+                 ZStack {
+                     // Breathing Box Outline
+                     RoundedRectangle(cornerRadius: 20)
+                         .stroke(Color.teal, lineWidth: 3)
+                         .frame(width: 280, height: 280)
+                     
+                     // Lottie Animation
+                     if let breathingAnimation = breathingAnimation {
+                         breathingAnimation
+                             .view()
+                             .frame(width: 280, height: 280)
+                     } else {
+                         // Fallback if Lottie fails to load
+                         Text("Lottie Animation")
+                             .foregroundColor(.white)
+                             .frame(width: 280, height: 280)
+                     }
+                     
+                     // Phase Text in Center
+                     VStack(spacing: 8) {
+                         Text(getCurrentPhaseName().uppercased())
+                            .font(Font.custom("Amagro", size: 24).weight(.bold))
+                            .foregroundColor(.white)
+                         
+                         Text(getPhaseInstruction())
+                              .font(Font.custom("Anek Gujarati", size: 16))
+                              .foregroundColor(.white.opacity(0.8))
+                     }
+                 }
+                 .frame(width: 280, height: 280)
                 
                 // Debug Screen
-                VStack(spacing: 8) {
-                    Text("DEBUG INFO")
-                        .font(Font.custom("Anek Gujarati", size: 14).weight(.bold))
-                        .foregroundColor(.yellow)
+                // VStack(spacing: 8) {
+                //     Text("DEBUG INFO")
+                //         .font(Font.custom("Anek Gujarati", size: 14).weight(.bold))
+                //         .foregroundColor(.yellow)
                     
-                    VStack(spacing: 4) {
-                        HStack {
-                            Text("Phase:")
-                            Text(getCurrentPhaseName())
-                                .foregroundColor(.white)
-                        }
-                        .font(Font.custom("Anek Gujarati", size: 12))
+                //     VStack(spacing: 4) {
+                //         HStack {
+                //             Text("Phase:")
+                //             Text(getCurrentPhaseName())
+                //                 .foregroundColor(.white)
+                //         }
+                //         .font(Font.custom("Anek Gujarati", size: 12))
                         
-                        HStack {
-                            Text("Session Time:")
-                            Text("\(Int(sessionTime))s")
-                                .foregroundColor(.white)
-                        }
-                        .font(Font.custom("Anek Gujarati", size: 12))
+                //         HStack {
+                //             Text("Session Time:")
+                //             Text("\(Int(sessionTime))s")
+                //         .foregroundColor(.white)
+                //         }
+                //         .font(Font.custom("Anek Gujarati", size: 12))
+                    
+                //         HStack {
+                //             Text("Cycle Time:")
+                //             Text(String(format: "%.1fs", getCurrentCycleTime()))
+                //         .foregroundColor(.white)
+                //         }
+                //         .font(Font.custom("Anek Gujarati", size: 12))
                         
-                        HStack {
-                            Text("Cycle Time:")
-                            Text(String(format: "%.1fs", getCurrentCycleTime()))
-                                .foregroundColor(.white)
-                        }
-                        .font(Font.custom("Anek Gujarati", size: 12))
-                        
-                        HStack {
-                            Text("Intensity:")
-                            Text(String(format: "%.1f%%", getCurrentIntensity() * 100))
-                                .foregroundColor(.green)
-                        }
-                        .font(Font.custom("Anek Gujarati", size: 12))
-                    }
-                    .padding(8)
-                    .background(Color.black.opacity(0.2))
-                    .cornerRadius(8)
-                }
+                //         HStack {
+                //             Text("Intensity:")
+                //             Text(String(format: "%.1f%%", getCurrentIntensity() * 100))
+                //                 .foregroundColor(.green)
+                //         }
+                //         .font(Font.custom("Anek Gujarati", size: 12))
+                //     }
+                //     .padding(8)
+                //     .background(Color.black.opacity(0.2))
+                //     .cornerRadius(8)
+                // }
             }
 
-            HStack(spacing: 18) {
-                Button(action: {
+                HStack(spacing: 18) {
+                    Button(action: {
                     if isAnimating {
                         pauseBreathingAnimation()
                     } else {
                         startBreathingAnimation()
                     }
-                }) {
-                    HStack(spacing: 4) {
+                    }) {
+                        HStack(spacing: 4) {
                         Text(isAnimating ? "Pause" : "Play")
-                            .font(Font.custom("Anek Gujarati", size: 16))
-                            .foregroundColor(.white)
-                    }
+                                .font(Font.custom("Anek Gujarati", size: 16))
+                                .foregroundColor(.white)
+                        }
                     .padding(EdgeInsets(top: 12, leading: 48, bottom: 12, trailing: 48))
-                    .background(Color(red: 0.17, green: 0.28, blue: 0.79))
-                    .cornerRadius(12)
-                }
-
-                Button(action: {
+                        .background(Color(red: 0.17, green: 0.28, blue: 0.79))
+                        .cornerRadius(12)
+                    }
+                    
+                    Button(action: {
                     stopBreathingAnimation()
-                }) {
-                    HStack(spacing: 4) {
-                        Text("Stop")
-                            .font(Font.custom("Anek Gujarati", size: 16))
-                            .foregroundColor(.white)
-                    }
+                    }) {
+                        HStack(spacing: 4) {
+                            Text("Stop")
+                                .font(Font.custom("Anek Gujarati", size: 16))
+                                .foregroundColor(.white)
+                        }
                     .padding(EdgeInsets(top: 12, leading: 48, bottom: 12, trailing: 48))
-                    .background(Color(red: 0.84, green: 0.36, blue: 0.28))
-                    .cornerRadius(12)
+                        .background(Color(red: 0.84, green: 0.36, blue: 0.28))
+                        .cornerRadius(12)
                 }
             }
             .offset(x: 0, y: 264)
@@ -150,6 +198,7 @@ struct BoxBreathingView: View {
         .background(Color(red: 0.10, green: 0.17, blue: 0.48))
         .onAppear {
             setupLottieAnimation()
+            setupHapticEngine()
         }
         .onDisappear {
             stopBreathingAnimation()
@@ -159,14 +208,13 @@ struct BoxBreathingView: View {
     // MARK: - Lottie Animation Setup
     
     private func setupLottieAnimation() {
-        // Load Lottie animation from local file
-        breathingAnimation = DotLottieAnimation(
-            fileName: "Box Breathing V6",
-            config: AnimationConfig(autoplay: false, loop: true)
-        )
-        
-        // Setup haptic engine
-        setupHapticEngine()
+        print("Setting up Lottie animation...")
+        breathingAnimation = DotLottieAnimation(fileName: "Box Breathing V6", config: AnimationConfig())
+        if breathingAnimation != nil {
+            print("Lottie animation loaded successfully!")
+        } else {
+            print("Failed to load Lottie animation")
+        }
     }
     
     // MARK: - Haptic Engine Setup
@@ -207,9 +255,8 @@ struct BoxBreathingView: View {
         startBreathingPhaseTimer()
         
         // Start the Lottie animation
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.play()
-        }
+        // Note: DotLottieAnimation doesn't have play/pause/stop methods
+        // The animation will play automatically when displayed
     }
     
     private func startBreathingPhaseTimer() {
@@ -325,9 +372,8 @@ struct BoxBreathingView: View {
         isAnimating = false
         
         // Pause the Lottie animation
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.pause()
-        }
+        // Note: DotLottieAnimation doesn't have play/pause/stop methods
+        // The animation will pause when the view is not visible
         
         sessionTimer?.invalidate()
         sessionTimer = nil
@@ -342,9 +388,8 @@ struct BoxBreathingView: View {
         isAnimating = false
         
         // Stop the Lottie animation
-        if let breathingAnimation = breathingAnimation {
-            breathingAnimation.stop()
-        }
+        // Note: DotLottieAnimation doesn't have play/pause/stop methods
+        // The animation will stop when the view is removed
         
         sessionTimer?.invalidate()
         sessionTimer = nil
@@ -385,6 +430,54 @@ struct BoxBreathingView: View {
         } else {
             return BreathingPhase.hold2.rawValue
         }
+    }
+
+    private func getPhaseInstruction() -> String {
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime)
+        
+        if cycleTime < 4.0 {
+            return "Inhale"
+        } else if cycleTime < 8.0 {
+            return "Hold"
+        } else if cycleTime < 12.0 {
+            return "Exhale"
+        } else {
+            return "Hold"
+        }
+    }
+
+    private func getBreathingCircleOffset() -> CGSize {
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime)
+        
+        let boxSize: CGFloat = 280
+        let halfBox = boxSize / 2
+        let circleSize: CGFloat = 20
+        let offsetRange = halfBox - (circleSize / 2)
+        
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        
+        if cycleTime < 4.0 { // Inhale (Bottom-Right to Top-Right)
+            let progress = cycleTime / 4.0
+            x = offsetRange
+            y = offsetRange - (progress * 2 * offsetRange)
+        } else if cycleTime < 8.0 { // Hold In (Top-Right to Top-Left)
+            let progress = (cycleTime - 4.0) / 4.0
+            x = offsetRange - (progress * 2 * offsetRange)
+            y = -offsetRange
+        } else if cycleTime < 12.0 { // Exhale (Top-Left to Bottom-Left)
+            let progress = (cycleTime - 8.0) / 4.0
+            x = -offsetRange
+            y = -offsetRange + (progress * 2 * offsetRange)
+        } else { // Hold Out (Bottom-Left to Bottom-Right)
+            let progress = (cycleTime - 12.0) / 4.0
+            x = -offsetRange + (progress * 2 * offsetRange)
+            y = offsetRange
+        }
+        
+        return CGSize(width: x, height: y)
     }
 }
 
