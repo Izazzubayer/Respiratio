@@ -71,6 +71,46 @@ struct BoxBreathingView: View {
                     breathingAnimation.view()
                         .frame(width: 280, height: 280)
                 }
+                
+                // Debug Screen
+                VStack(spacing: 8) {
+                    Text("DEBUG INFO")
+                        .font(Font.custom("Anek Gujarati", size: 14).weight(.bold))
+                        .foregroundColor(.yellow)
+                    
+                    VStack(spacing: 4) {
+                        HStack {
+                            Text("Phase:")
+                            Text(getCurrentPhaseName())
+                                .foregroundColor(.white)
+                        }
+                        .font(Font.custom("Anek Gujarati", size: 12))
+                        
+                        HStack {
+                            Text("Session Time:")
+                            Text("\(Int(sessionTime))s")
+                                .foregroundColor(.white)
+                        }
+                        .font(Font.custom("Anek Gujarati", size: 12))
+                        
+                        HStack {
+                            Text("Cycle Time:")
+                            Text(String(format: "%.1fs", getCurrentCycleTime()))
+                                .foregroundColor(.white)
+                        }
+                        .font(Font.custom("Anek Gujarati", size: 12))
+                        
+                        HStack {
+                            Text("Intensity:")
+                            Text(String(format: "%.1f%%", getCurrentIntensity() * 100))
+                                .foregroundColor(.green)
+                        }
+                        .font(Font.custom("Anek Gujarati", size: 12))
+                    }
+                    .padding(8)
+                    .background(Color.black.opacity(0.2))
+                    .cornerRadius(8)
+                }
             }
 
             HStack(spacing: 18) {
@@ -175,7 +215,7 @@ struct BoxBreathingView: View {
     private func startBreathingPhaseTimer() {
         var phaseStartTime = Date()
         
-        phaseTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in // 20 FPS for reliable haptics
+        phaseTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in // 10 FPS for reliable haptics
             let elapsed = Date().timeIntervalSince(phaseStartTime)
             let currentPhase = self.getCurrentPhase(elapsed: elapsed)
             
@@ -190,37 +230,52 @@ struct BoxBreathingView: View {
     }
     
     private func updateHapticFeedback(elapsed: TimeInterval, phase: BreathingPhase) {
-        let phaseElapsed = elapsed.truncatingRemainder(dividingBy: 4.0)
-        let phaseProgress = phaseElapsed / 4.0
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime) // Use sessionTime instead of elapsed
         
-        switch phase {
-        case .inhale:
-            // Continuous vibration: 0% to 50% strength
-            let intensity = phaseProgress * 0.5 // 0.0 to 0.5
-            triggerContinuousHaptic(intensity: intensity, style: .light)
-            
-        case .hold1, .hold2:
-            // 100% strength heartbeat thuds every 0.3 seconds
-            if Int(phaseElapsed * 3.33) % 1 == 0 { // Every 0.3 seconds
-                holdHaptic.prepare()
-                holdHaptic.impactOccurred()
+        if cycleTime < 4.0 {
+            // Inhale: haptic vibration gradually increase from 0% to 80%
+            let phaseProgress = cycleTime / 4.0
+            let intensity = phaseProgress * 0.8 // 0.0 to 0.8
+            if Int(cycleTime * 10) % 2 == 0 { // Every 0.2 seconds
+                triggerProgressiveHaptic(intensity: intensity, style: .light)
             }
             
-        case .exhale:
-            // Continuous vibration: 50% to 0% strength
-            let intensity = (1.0 - phaseProgress) * 0.5 // 0.5 to 0.0
-            triggerContinuousHaptic(intensity: intensity, style: .medium)
+        } else if cycleTime < 8.0 {
+            // Hold1: completely silent - no haptic feedback
+            // No background vibration, no thuds - complete silence
+            
+        } else if cycleTime < 12.0 {
+            // Exhale: haptic vibration gradually decrease from 40% to 0
+            let phaseProgress = (cycleTime - 8.0) / 4.0
+            let intensity = (1.0 - phaseProgress) * 0.4 // 0.4 to 0.0
+            if Int((cycleTime - 8.0) * 10) % 2 == 0 { // Every 0.2 seconds
+                triggerProgressiveHaptic(intensity: intensity, style: .medium)
+            }
+            
+        } else {
+            // Hold2: completely silent - no haptic feedback
+            // No background vibration, no thuds - complete silence
         }
     }
     
-    private func triggerContinuousHaptic(intensity: Double, style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        // Create continuous haptic feedback
+    private func triggerProgressiveHaptic(intensity: Double, style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        // Create haptic with progressive intensity
         let haptic = UIImpactFeedbackGenerator(style: style)
         haptic.prepare()
         
-        // Apply intensity by adjusting the impact
-        if intensity > 0.3 {
-            haptic.impactOccurred(intensity: CGFloat(intensity))
+        // Debug output to see intensity values
+        print("Haptic Intensity: \(intensity), Style: \(style)")
+        
+        // Use different haptic styles based on intensity
+        if intensity > 0.6 {
+            let strongHaptic = UIImpactFeedbackGenerator(style: .heavy)
+            strongHaptic.prepare()
+            strongHaptic.impactOccurred()
+        } else if intensity > 0.3 {
+            let mediumHaptic = UIImpactFeedbackGenerator(style: .medium)
+            mediumHaptic.prepare()
+            mediumHaptic.impactOccurred()
         } else {
             haptic.impactOccurred()
         }
@@ -228,7 +283,6 @@ struct BoxBreathingView: View {
     
     private func getCurrentPhase(elapsed: TimeInterval) -> BreathingPhase {
         let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
-        
         let cycleTime = elapsed.truncatingRemainder(dividingBy: totalCycleTime)
         
         if cycleTime < 4.0 {
@@ -239,6 +293,31 @@ struct BoxBreathingView: View {
             return .exhale
         } else {
             return .hold2
+        }
+    }
+    
+    private func getCurrentCycleTime() -> Double {
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime)
+        return cycleTime
+    }
+    
+    private func getCurrentIntensity() -> Double {
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime)
+        
+        if cycleTime < 4.0 {
+            // Inhale: smooth progression from 0% to 80%
+            let phaseProgress = cycleTime / 4.0
+            return phaseProgress * 0.8 // 0.0 to 0.8
+        } else if cycleTime < 8.0 {
+            return 0.0 // No intensity during hold1 (silent)
+        } else if cycleTime < 12.0 {
+            // Exhale: smooth progression from 40% to 0%
+            let phaseProgress = (cycleTime - 8.0) / 4.0
+            return (1.0 - phaseProgress) * 0.4 // 0.4 to 0.0
+        } else {
+            return 0.0 // No intensity during hold2 (silent)
         }
     }
 
@@ -291,6 +370,21 @@ struct BoxBreathingView: View {
         let phaseStartTime = Double(currentPhaseIndex) * 4.0
         let phaseElapsed = sessionTime - phaseStartTime
         return max(0, min(1, phaseElapsed / 4.0))
+    }
+
+    private func getCurrentPhaseName() -> String {
+        let totalCycleTime: TimeInterval = 16.0 // 4 seconds per phase
+        let cycleTime = sessionTime.truncatingRemainder(dividingBy: totalCycleTime)
+        
+        if cycleTime < 4.0 {
+            return BreathingPhase.inhale.rawValue
+        } else if cycleTime < 8.0 {
+            return BreathingPhase.hold1.rawValue
+        } else if cycleTime < 12.0 {
+            return BreathingPhase.exhale.rawValue
+        } else {
+            return BreathingPhase.hold2.rawValue
+        }
     }
 }
 
