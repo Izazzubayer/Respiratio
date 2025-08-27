@@ -91,41 +91,6 @@ struct MeditationView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Custom Back Button - positioned at the top
-                    HStack {
-                        Button(action: {
-                            // Add haptic feedback
-                            #if os(iOS)
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            #endif
-                            // This will navigate back to the main app
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Back to App")
-                                    .font(.custom("AnekGujarati-Medium", size: 16))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.15))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                        }
-                        .accessibilityLabel("Back to main app")
-                        .accessibilityHint("Returns to the main app menu")
-                        .padding(.leading, 16)
-                        .padding(.top, 16)
-                        
-                        Spacer()
-                    }
-                    
                     // Fixed Header section
                     VStack(alignment: .leading, spacing: 4) {
                         Text("MEDITATION")

@@ -14,26 +14,32 @@ struct NoiseSessionView: View {
     @State private var sessionDuration: TimeInterval = 0
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Description and tags
-                descriptionSection
-                
-                // Progress Ring
-                progressSection
-                
-                // Sleep Timer chips
-                sleepTimerSection
-                
-                // Volume controls
-                volumeSection
-                
-                // Transport controls
-                transportSection
+        ZStack {
+            // Background matching app theme
+            Color(hex: "#1A2B7C")
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Description and tags
+                    descriptionSection
+                    
+                    // Progress Ring
+                    progressSection
+                    
+                    // Sleep Timer chips
+                    sleepTimerSection
+                    
+                    // Volume controls
+                    volumeSection
+                    
+                    // Transport controls
+                    transportSection
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 32)
         }
         .navigationTitle(noise.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -73,8 +79,8 @@ struct NoiseSessionView: View {
         VStack(alignment: .leading, spacing: 8) {
             if !noise.summary.isEmpty {
                 Text(noise.summary)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.custom("AnekGujarati-Regular", size: 16))
+                    .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.leading)
             }
             
@@ -83,11 +89,11 @@ struct NoiseSessionView: View {
                 HStack {
                     ForEach(noise.tags, id: \.self) { tag in
                         Text(tag.capitalized)
-                            .font(.caption.weight(.medium))
-                            .padding(.vertical, 4)
-                            .padding(.horizontal, 8)
-                            .background(Capsule().fill(tintColor(for: noise).opacity(0.12)))
-                            .foregroundStyle(tintColor(for: noise))
+                            .font(.custom("AnekGujarati-Medium", size: 12))
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .background(Capsule().fill(Color.white.opacity(0.15)))
+                            .foregroundColor(.white)
                     }
                     Spacer()
                 }
@@ -101,7 +107,7 @@ struct NoiseSessionView: View {
             ProgressRing(
                 progress: engine.progress,
                 isIndeterminate: engine.durationSeconds == nil && engine.isPlaying,
-                accent: Color.accentColor
+                accent: Color.white
             )
             .frame(width: 120, height: 120)
             .accessibilityLabel(engine.isPlaying ? "Playing" : "Paused")
@@ -109,8 +115,8 @@ struct NoiseSessionView: View {
                               : "\(Int(engine.progress * 100)) percent")
             
             Text(engine.durationSeconds == nil ? "∞" : "")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.custom("AnekGujarati-Regular", size: 14))
+                .foregroundColor(.white.opacity(0.6))
         }
     }
     
@@ -118,8 +124,8 @@ struct NoiseSessionView: View {
     private var sleepTimerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Sleep Timer")
-                .font(.headline)
-                .foregroundStyle(.primary)
+                .font(.custom("Amagro-Bold", size: 20))
+                .foregroundColor(.white)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -135,7 +141,7 @@ struct NoiseSessionView: View {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         } label: {
                             Text(label(for: duration))
-                                .font(.subheadline.weight(.medium))
+                                .font(.custom("AnekGujarati-Bold", size: 14))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44) // HIG minimum tap target
                         }
@@ -148,7 +154,7 @@ struct NoiseSessionView: View {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         } label: {
                             Text(label(for: duration))
-                                .font(.subheadline.weight(.medium))
+                                .font(.custom("AnekGujarati-Medium", size: 14))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44) // HIG minimum tap target
                         }
@@ -163,7 +169,7 @@ struct NoiseSessionView: View {
                     showCustom = true
                 } label: {
                     Label("Custom", systemImage: "timer")
-                        .font(.subheadline.weight(.medium))
+                        .font(.custom("AnekGujarati-Medium", size: 14))
                         .frame(maxWidth: .infinity)
                         .frame(height: 44) // HIG minimum tap target
                 }
@@ -179,8 +185,8 @@ struct NoiseSessionView: View {
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Volume")
-                .font(.headline)
-                .foregroundStyle(.primary)
+                .font(.custom("Amagro-Bold", size: 20))
+                .foregroundColor(.white)
             
             HStack(spacing: 16) {
                 // Mute button
@@ -190,6 +196,7 @@ struct NoiseSessionView: View {
                 } label: {
                     Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
                         .font(.title3)
+                        .foregroundColor(.white)
                         .frame(width: 44, height: 44) // HIG minimum tap target
                 }
                 .buttonStyle(BorderedButtonStyle())
@@ -201,12 +208,13 @@ struct NoiseSessionView: View {
                 } minimumValueLabel: {
                     Image(systemName: "speaker.fill")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.white.opacity(0.6))
                 } maximumValueLabel: {
                     Image(systemName: "speaker.3.fill")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.white.opacity(0.6))
                 }
+                .tint(.white)
                 .accessibilityLabel("Volume")
                 .accessibilityValue("\(Int(engine.volume * 100)) percent")
                 
@@ -230,7 +238,8 @@ struct NoiseSessionView: View {
             } label: {
                 Label(engine.isPlaying ? "Pause" : "Play",
                       systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.headline.weight(.semibold))
+                    .font(.custom("AnekGujarati-Bold", size: 18))
+                    .foregroundColor(.white)
             }
             .buttonStyle(BorderedProminentButtonStyle())
             .controlSize(.large)
@@ -244,7 +253,8 @@ struct NoiseSessionView: View {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
                 Label("Stop", systemImage: "stop.fill")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.custom("AnekGujarati-Bold", size: 16))
+                    .foregroundColor(.white)
             }
             .buttonStyle(BorderedButtonStyle())
             .controlSize(.large)
@@ -258,36 +268,48 @@ struct NoiseSessionView: View {
     // MARK: - Custom Duration Sheet
     private var customDurationSheet: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Text("Set Custom Duration")
-                    .font(.title2.weight(.semibold))
+            ZStack {
+                Color(hex: "#1A2B7C")
+                    .ignoresSafeArea()
                 
-                Picker("Minutes", selection: $customMinutes) {
-                    ForEach(1...180, id: \.self) { minutes in
-                        Text("\(minutes) min")
-                            .tag(minutes)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(height: 200)
-                
-                HStack(spacing: 16) {
-                    Button("Cancel") {
-                        showCustom = false
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(BorderedButtonStyle())
+                VStack(spacing: 24) {
+                    Text("Set Custom Duration")
+                        .font(.custom("Amagro-Bold", size: 24))
+                        .foregroundColor(.white)
                     
-                    Button("Set Duration") {
-                        engine.selectedDuration = .minutes(customMinutes)
-                        showCustom = false
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    Picker("Minutes", selection: $customMinutes) {
+                        ForEach(1...180, id: \.self) { minutes in
+                            Text("\(minutes) min")
+                                .font(.custom("AnekGujarati-Regular", size: 16))
+                                .foregroundColor(.white)
+                                .tag(minutes)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(BorderedProminentButtonStyle())
+                    .pickerStyle(.wheel)
+                    .frame(height: 200)
+                    
+                    HStack(spacing: 16) {
+                        Button("Cancel") {
+                            showCustom = false
+                        }
+                        .font(.custom("AnekGujarati-Medium", size: 16))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .buttonStyle(BorderedButtonStyle())
+                        
+                        Button("Set Duration") {
+                            engine.selectedDuration = .minutes(customMinutes)
+                            showCustom = false
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .font(.custom("AnekGujarati-Bold", size: 16))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .buttonStyle(BorderedProminentButtonStyle())
+                    }
                 }
+                .padding()
             }
-            .padding()
             .presentationDetents([.medium])
         }
     }
@@ -323,8 +345,8 @@ struct NoiseSessionView: View {
 struct MPVolumeViewWrapper: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
         let routePickerView = AVRoutePickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
-        routePickerView.activeTintColor = UIColor.label
-        routePickerView.tintColor = UIColor.secondaryLabel
+        routePickerView.activeTintColor = UIColor.white
+        routePickerView.tintColor = UIColor.white.withAlphaComponent(0.6)
         return routePickerView
     }
     

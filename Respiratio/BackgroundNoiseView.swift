@@ -112,13 +112,13 @@ struct BackgroundNoiseView: View {
 private struct NoiseCard: View {
     let preset: NoisePreset
     
-    // Color scheme for each card
+    // Color scheme for each card - using consistent app colors
     private var cardColors: [Color] {
         [
-            Color(red: 0.56, green: 0.59, blue: 0.99), // Blue
-            Color(red: 0.98, green: 0.43, blue: 0.35), // Orange
-            Color(red: 0.25, green: 0.25, blue: 0.31), // Dark gray
-            Color(red: 0.42, green: 0.70, blue: 0.56), // Green
+            Color(red: 0.56, green: 0.59, blue: 0.99), // Blue - White Noise
+            Color(red: 0.98, green: 0.43, blue: 0.35), // Orange - Brown Noise
+            Color(red: 0.25, green: 0.25, blue: 0.31), // Dark gray - Theta Wave
+            Color(red: 0.42, green: 0.70, blue: 0.56), // Green - Beta Wave
         ]
     }
     
