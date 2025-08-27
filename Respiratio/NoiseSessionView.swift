@@ -122,7 +122,7 @@ struct NoiseSessionView: View {
     
     // MARK: - Sleep Timer Section
     private var sleepTimerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Sleep Timer")
                 .font(.custom("Amagro-Bold", size: 20))
                 .foregroundColor(.white)
@@ -131,7 +131,7 @@ struct NoiseSessionView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible()),
                 GridItem(.flexible())
-            ], spacing: 8) {
+            ], spacing: 12) {
                 ForEach(Array(presets.enumerated()), id: \.element) { index, duration in
                     let selected = duration == engine.selectedDuration
                     
@@ -142,11 +142,25 @@ struct NoiseSessionView: View {
                         } label: {
                             Text(label(for: duration))
                                 .font(.custom("AnekGujarati-Bold", size: 14))
+                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 44) // HIG minimum tap target
+                                .frame(height: 48)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: Color.white.opacity(0.2), radius: 8, x: 0, y: 4)
                         }
-                        .buttonStyle(BorderedProminentButtonStyle())
-                        .controlSize(.small)
                         .accessibilityLabel("Set timer to \(label(for: duration))")
                     } else {
                         Button {
@@ -155,11 +169,18 @@ struct NoiseSessionView: View {
                         } label: {
                             Text(label(for: duration))
                                 .font(.custom("AnekGujarati-Medium", size: 14))
+                                .foregroundColor(.white.opacity(0.8))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 44) // HIG minimum tap target
+                                .frame(height: 48)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color.white.opacity(0.08))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                        )
+                                )
                         }
-                        .buttonStyle(BorderedButtonStyle())
-                        .controlSize(.small)
                         .accessibilityLabel("Set timer to \(label(for: duration))")
                     }
                 }
@@ -168,13 +189,24 @@ struct NoiseSessionView: View {
                 Button {
                     showCustom = true
                 } label: {
-                    Label("Custom", systemImage: "timer")
-                        .font(.custom("AnekGujarati-Medium", size: 14))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44) // HIG minimum tap target
+                    HStack(spacing: 6) {
+                        Image(systemName: "timer")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("Custom")
+                            .font(.custom("AnekGujarati-Medium", size: 14))
+                    }
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
                 }
-                .buttonStyle(BorderedButtonStyle())
-                .controlSize(.small)
                 .accessibilityLabel("Set custom duration")
             }
         }
@@ -183,86 +215,190 @@ struct NoiseSessionView: View {
     
     // MARK: - Volume Section
     private var volumeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Volume")
                 .font(.custom("Amagro-Bold", size: 20))
                 .foregroundColor(.white)
             
-            HStack(spacing: 16) {
-                // Mute button
+            HStack(spacing: 20) {
+                // Custom Mute button
                 Button {
                     engine.isMuted.toggle()
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
-                    Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
-                        .font(.title3)
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44) // HIG minimum tap target
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: engine.isMuted ? 
+                                        [Color.red.opacity(0.3), Color.red.opacity(0.1)] :
+                                        [Color.white.opacity(0.2), Color.white.opacity(0.05)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        engine.isMuted ? Color.red.opacity(0.4) : Color.white.opacity(0.2),
+                                        lineWidth: 1
+                                    )
+                            )
+                        
+                        Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(engine.isMuted ? .red : .white)
+                    }
+                    .frame(width: 56, height: 56)
+                    .shadow(color: engine.isMuted ? Color.red.opacity(0.3) : Color.white.opacity(0.1), radius: 8, x: 0, y: 4)
                 }
-                .buttonStyle(BorderedButtonStyle())
                 .accessibilityLabel(engine.isMuted ? "Unmute" : "Mute")
                 
-                // Volume slider
-                Slider(value: $engine.volume, in: 0...1) {
-                    Text("Volume")
-                } minimumValueLabel: {
-                    Image(systemName: "speaker.fill")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                } maximumValueLabel: {
-                    Image(systemName: "speaker.3.fill")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                // Custom Volume slider
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "speaker.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Spacer()
+                        
+                        Text("\(Int(engine.volume * 100))%")
+                            .font(.custom("AnekGujarati-Medium", size: 12))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Image(systemName: "speaker.3.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
+                    // Custom Volume Slider
+                    ZStack(alignment: .leading) {
+                        // Track
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 8)
+                        
+                        // Progress
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.8), Color.white.opacity(0.6)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(0, CGFloat(engine.volume) * UIScreen.main.bounds.width * 0.4), height: 8)
+                        
+                        // Thumb
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.white, Color.white.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 20, height: 20)
+                            .shadow(color: Color.white.opacity(0.3), radius: 4, x: 0, y: 2)
+                            .offset(x: max(0, CGFloat(engine.volume) * UIScreen.main.bounds.width * 0.4 - 10))
+                    }
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                let width = UIScreen.main.bounds.width * 0.4
+                                let percentage = max(0, min(1, value.location.x / width))
+                                engine.volume = Float(percentage)
+                            }
+                    )
                 }
-                .tint(.white)
-                .accessibilityLabel("Volume")
-                .accessibilityValue("\(Int(engine.volume * 100)) percent")
+                .frame(maxWidth: .infinity)
                 
-                // AirPlay route picker
-                MPVolumeViewWrapper()
-                    .frame(width: 44, height: 44)
-                    .accessibilityLabel("AirPlay")
+                // Custom AirPlay button
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.08))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
+                    
+                    MPVolumeViewWrapper()
+                        .frame(width: 56, height: 56)
+                }
+                .frame(width: 56, height: 56)
+                .accessibilityLabel("AirPlay")
             }
         }
     }
     
     // MARK: - Transport Section
     private var transportSection: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 24) {
             Spacer()
             
-            // Play/Pause button
-            Button {
-                engine.isPlaying ? engine.pause() : engine.play()
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            } label: {
-                Label(engine.isPlaying ? "Pause" : "Play",
-                      systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.custom("AnekGujarati-Bold", size: 18))
-                    .foregroundColor(.white)
-            }
-            .buttonStyle(BorderedProminentButtonStyle())
-            .controlSize(.large)
-            .accessibilityLabel(engine.isPlaying ? "Pause audio" : "Play audio")
-            
-            // Stop button
+            // Custom Stop button
             Button(role: .destructive) {
                 sessionDuration = engine.elapsed
                 engine.stop()
                 showCompletionAlert = true
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
-                Label("Stop", systemImage: "stop.fill")
-                    .font(.custom("AnekGujarati-Bold", size: 16))
-                    .foregroundColor(.white)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.red.opacity(0.3), Color.red.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                        )
+                    
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.red)
+                }
+                .frame(width: 72, height: 72)
+                .shadow(color: Color.red.opacity(0.3), radius: 12, x: 0, y: 6)
             }
-            .buttonStyle(BorderedButtonStyle())
-            .controlSize(.large)
-            .tint(.red)
             .accessibilityLabel("Stop session and show statistics")
+            
+            // Custom Play/Pause button
+            Button {
+                engine.isPlaying ? engine.pause() : engine.play()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.4), Color.white.opacity(0.15)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.white.opacity(0.5), lineWidth: 1.5)
+                        )
+                    
+                    Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 32, weight: .semibold))
+                        .foregroundColor(.white)
+                        .offset(x: engine.isPlaying ? 0 : 2) // Slight offset for play button
+                }
+                .frame(width: 96, height: 96)
+                .shadow(color: Color.white.opacity(0.3), radius: 16, x: 0, y: 8)
+            }
+            .accessibilityLabel(engine.isPlaying ? "Pause audio" : "Play audio")
             
             Spacer()
         }
+        .padding(.vertical, 16)
     }
     
     // MARK: - Custom Duration Sheet
@@ -272,31 +408,47 @@ struct NoiseSessionView: View {
                 Color(hex: "#1A2B7C")
                     .ignoresSafeArea()
                 
-                VStack(spacing: 24) {
+                VStack(spacing: 32) {
                     Text("Set Custom Duration")
                         .font(.custom("Amagro-Bold", size: 24))
                         .foregroundColor(.white)
                     
-                    Picker("Minutes", selection: $customMinutes) {
-                        ForEach(1...180, id: \.self) { minutes in
-                            Text("\(minutes) min")
-                                .font(.custom("AnekGujarati-Regular", size: 16))
-                                .foregroundColor(.white)
-                                .tag(minutes)
+                    VStack(spacing: 16) {
+                        Text("Select minutes")
+                            .font(.custom("AnekGujarati-Regular", size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Picker("Minutes", selection: $customMinutes) {
+                            ForEach(1...180, id: \.self) { minutes in
+                                Text("\(minutes) min")
+                                    .font(.custom("AnekGujarati-Regular", size: 16))
+                                    .foregroundColor(.white)
+                                    .tag(minutes)
+                            }
                         }
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
                     }
-                    .pickerStyle(.wheel)
-                    .frame(height: 200)
                     
-                    HStack(spacing: 16) {
+                    HStack(spacing: 20) {
+                        // Custom Cancel button
                         Button("Cancel") {
                             showCustom = false
                         }
                         .font(.custom("AnekGujarati-Medium", size: 16))
-                        .foregroundColor(.white)
+                        .foregroundColor(.white.opacity(0.8))
                         .frame(maxWidth: .infinity)
-                        .buttonStyle(BorderedButtonStyle())
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                )
+                        )
                         
+                        // Custom Set Duration button
                         Button("Set Duration") {
                             engine.selectedDuration = .minutes(customMinutes)
                             showCustom = false
@@ -305,10 +457,26 @@ struct NoiseSessionView: View {
                         .font(.custom("AnekGujarati-Bold", size: 16))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .buttonStyle(BorderedProminentButtonStyle())
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                                )
+                        )
+                        .shadow(color: Color.white.opacity(0.2), radius: 8, x: 0, y: 4)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 32)
             }
             .presentationDetents([.medium])
         }
