@@ -231,7 +231,7 @@ struct NoiseSessionView: View {
                             .fill(
                                 LinearGradient(
                                     colors: engine.isMuted ? 
-                                        [Color.red.opacity(0.3), Color.red.opacity(0.1)] :
+                                        [Color.white.opacity(0.15), Color.white.opacity(0.05)] :
                                         [Color.white.opacity(0.2), Color.white.opacity(0.05)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -239,18 +239,15 @@ struct NoiseSessionView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(
-                                        engine.isMuted ? Color.red.opacity(0.4) : Color.white.opacity(0.2),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
                             )
                         
                         Image(systemName: engine.isMuted ? "speaker.slash.fill" : "speaker.2.fill")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(engine.isMuted ? .red : .white)
+                            .foregroundColor(.white)
                     }
                     .frame(width: 56, height: 56)
-                    .shadow(color: engine.isMuted ? Color.red.opacity(0.3) : Color.white.opacity(0.1), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color.white.opacity(0.1), radius: 8, x: 0, y: 4)
                 }
                 .accessibilityLabel(engine.isMuted ? "Unmute" : "Mute")
                 
@@ -348,22 +345,22 @@ struct NoiseSessionView: View {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(
                             LinearGradient(
-                                colors: [Color.red.opacity(0.3), Color.red.opacity(0.1)],
+                                colors: [Color.white.opacity(0.15), Color.white.opacity(0.05)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
                         )
                     
                     Image(systemName: "stop.fill")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.red)
+                        .foregroundColor(.white)
                 }
                 .frame(width: 72, height: 72)
-                .shadow(color: Color.red.opacity(0.3), radius: 12, x: 0, y: 6)
+                .shadow(color: Color.white.opacity(0.1), radius: 12, x: 0, y: 6)
             }
             .accessibilityLabel("Stop session and show statistics")
             
