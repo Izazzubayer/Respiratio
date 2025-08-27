@@ -105,16 +105,32 @@ struct MeditationSessionView: View {
                 // Custom Back Button - positioned at the top
                 HStack {
                     Button(action: {
+                        // Add haptic feedback
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        #endif
                         dismiss()
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 8) {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .medium))
-                            Text("Back")
-                                .font(Font.custom("Anek Gujarati", size: 16))
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Back to Meditation")
+                                .font(.custom("AnekGujarati-Medium", size: 16))
                         }
                         .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.15))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
                     }
+                    .accessibilityLabel("Back to meditation selection")
+                    .accessibilityHint("Returns to the main meditation menu")
                     .padding(.leading, 16)
                     .padding(.top, 16)
                     

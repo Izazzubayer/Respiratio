@@ -47,24 +47,6 @@ struct SplashScreenView: View {
     }
 }
 
-// MARK: - App Root View
-
-struct AppRootView: View {
-    @State private var hasSeenWelcome = false
-    
-    var body: some View {
-        if hasSeenWelcome {
-            ContentView()
-        } else {
-            WelcomeView(onGetStarted: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    hasSeenWelcome = true
-                }
-            })
-        }
-    }
-}
-
 #Preview {
     SplashScreenView()
 }
