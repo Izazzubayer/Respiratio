@@ -94,37 +94,79 @@ struct NoiseSessionView: View {
     // MARK: - Enhanced Progress Section - Left Aligned
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ZStack {
-                // Enhanced progress ring background
-                Circle()
-                    .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                    .frame(width: 140, height: 140)
+            // Audio frequency progress bar
+            VStack(spacing: 12) {
+                // Progress bar container
+                ZStack {
+                    // Background track
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 80)
+                    
+                    // Audio frequency bars
+                    HStack(spacing: 3) {
+                        ForEach(0..<32, id: \.self) { index in
+                            let barHeight = getBarHeight(for: index, progress: engine.progress)
+                            
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            tintColor(for: noise),
+                                            tintColor(for: noise).opacity(0.7)
+                                        ],
+                                        startPoint: .bottom,
+                                        endPoint: .top
+                                    )
+                                )
+                                .frame(width: 8, height: barHeight)
+                                .animation(.easeInOut(duration: 0.3), value: barHeight)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+                }
                 
-                ProgressRing(
-                    progress: engine.progress,
-                    isIndeterminate: engine.durationSeconds == nil && engine.isPlaying,
-                    accent: tintColor(for: noise)
-                )
-                .frame(width: 140, height: 140)
-                .accessibilityLabel(engine.isPlaying ? "Playing" : "Paused")
-                .accessibilityValue(engine.durationSeconds == nil ? "Indeterminate" 
-                                  : "\(Int(engine.progress * 100)) percent")
-                
-                // Center status indicator
-                if engine.durationSeconds == nil {
-                    Text("∞")
-                        .font(.custom("AnekGujarati-Bold", size: 20))
-                        .foregroundColor(.white.opacity(0.7))
+                // Progress text
+                HStack {
+                    if engine.durationSeconds == nil {
+                        Text("∞")
+                            .font(.custom("AnekGujarati-Bold", size: 18))
+                            .foregroundColor(.white.opacity(0.7))
+                    } else {
+                        Text("\(Int(engine.progress * 100))%")
+                            .font(.custom("AnekGujarati-Bold", size: 18))
+                            .foregroundColor(tintColor(for: noise))
+                    }
+                    
+                    Spacer()
+                    
+                    // Status text
+                    Text(engine.isPlaying ? "Now Playing" : "Ready to Play")
+                        .font(.custom("AnekGujarati-Medium", size: 16))
+                        .foregroundColor(.white.opacity(0.8))
                 }
             }
-            
-            // Status text - left aligned
-            Text(engine.isPlaying ? "Now Playing" : "Ready to Play")
-                .font(.custom("AnekGujarati-Medium", size: 16))
-                .foregroundColor(.white.opacity(0.8))
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // MARK: - Helper function for bar heights
+    private func getBarHeight(for index: Int, progress: Double) -> CGFloat {
+        let baseHeight: CGFloat = 20
+        let maxHeight: CGFloat = 60
+        
+        // Create a wave-like pattern
+        let waveOffset = sin(Double(index) * 0.3) * 0.3
+        let progressMultiplier = progress + waveOffset
+        
+        // Add some randomness for natural look
+        let randomFactor = sin(Double(index) * 0.7) * 0.2
+        
+        let height = baseHeight + (maxHeight - baseHeight) * progressMultiplier * (1 + randomFactor)
+        
+        // Ensure minimum height
+        return max(baseHeight, min(maxHeight, height))
     }
     
     // MARK: - Enhanced Sleep Timer Section - Left Aligned
