@@ -12,7 +12,6 @@ import AVFoundation
 @main
 struct RespiratioApp: App {
     @StateObject private var audioEngine = MeditationAudioEngine.shared
-    @StateObject private var noiseEngine = NoiseEngine.shared
     
     init() {
         configureAudioSession()
@@ -32,7 +31,6 @@ struct RespiratioApp: App {
             queue: .main
         ) { _ in
             audioEngine.handleAppDidEnterBackground()
-            noiseEngine.handleAppDidEnterBackground()
         }
         
         NotificationCenter.default.addObserver(
@@ -41,7 +39,6 @@ struct RespiratioApp: App {
             queue: .main
         ) { _ in
             audioEngine.handleAppWillEnterForeground()
-            noiseEngine.handleAppWillEnterForeground()
         }
         
         // Handle audio interruptions (phone calls, etc.)
@@ -51,7 +48,6 @@ struct RespiratioApp: App {
             queue: .main
         ) { notification in
             audioEngine.handleAudioInterruption(notification: notification)
-            noiseEngine.handleAudioInterruption(notification: notification)
         }
     }
 }

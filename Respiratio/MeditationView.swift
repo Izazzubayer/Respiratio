@@ -28,18 +28,18 @@ private let quickMeditations: [MeditationPreset] = [
         title: "2-Minute Quick Reset",
         description: "Perfect for a quick mental refresh during busy days. Ideal for office breaks, before meetings, or when you need to reset your mind.",
         minutes: 2,
-        symbol: "timer",
-        audioFileName: nil,
-        hasAudio: false,
+        symbol: "waveform",
+        audioFileName: "2min",
+        hasAudio: true,
         tags: ["Reset", "Meeting", "Refresh"]
     ),
     .init(
         title: "5-Minute Focus Boost",
         description: "Enhance concentration and mental clarity. Great for students before studying, professionals before important tasks, or to sharpen their focus.",
         minutes: 5,
-        symbol: "timer",
-        audioFileName: nil,
-        hasAudio: false,
+        symbol: "waveform",
+        audioFileName: "5min",
+        hasAudio: true,
         tags: ["Focus", "Study", "Work"]
     ),
     .init(
@@ -55,18 +55,18 @@ private let quickMeditations: [MeditationPreset] = [
         title: "15-Minute Deep Calm",
         description: "Achieve deeper relaxation and inner peace. Ideal for evening wind-down, stress relief, or when you need extended time to quiet your mind and find tranquility.",
         minutes: 15,
-        symbol: "timer",
-        audioFileName: nil,
-        hasAudio: false,
+        symbol: "waveform",
+        audioFileName: "15min",
+        hasAudio: true,
         tags: ["Deep Relaxation", "Wind-Down"]
     ),
     .init(
         title: "20-Minute Stress Relief",
         description: "Comprehensive stress reduction and emotional balance. Perfect for high-stress days, anxiety relief, or when you need substantial time to process emotions and find equilibrium.",
         minutes: 20,
-        symbol: "timer",
-        audioFileName: nil,
-        hasAudio: false,
+        symbol: "waveform",
+        audioFileName: "20min",
+        hasAudio: true,
         tags: ["Stress Relief", "Anxiety Reduction"]
     ),
     // .init(
