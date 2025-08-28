@@ -69,9 +69,9 @@ struct BackgroundNoiseView: View {
                 
                 VStack(spacing: 0) {
                     // Enhanced Header section
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("BACKGROUND NOISE")
-                            .font(.custom("Amagro-Bold", size: 28))
+                            .font(.custom("Amagro-Bold", size: 24))
                             .foregroundColor(.white)
                         
                         Text("Choose your ambient soundscape")
@@ -80,12 +80,12 @@ struct BackgroundNoiseView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
-                    .padding(.top, 20)
-                    .padding(.bottom, 32)
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
                     
                     // Scrollable Noise cards
                     ScrollView {
-                        LazyVStack(spacing: 20) {
+                        LazyVStack(spacing: 24) {
                             ForEach(noisePresets) { preset in
                                 NavigationLink {
                                     NoiseSessionView(noise: preset.noise)
@@ -158,52 +158,54 @@ private struct NoiseCard: View {
         default: return "music.note"
         }
     }
+    
+    // Tag colors for each noise type
+    private func tagColor(for title: String) -> Color {
+        switch title {
+        case "White Noise": return Color(hex: "#4A90E2")
+        case "Brown Noise": return Color(hex: "#E67E22")
+        case "Theta Wave": return Color(hex: "#9B59B6")
+        case "Beta Wave": return Color(hex: "#F1C40F")
+        default: return Color(hex: "#4A90E2")
+        }
+    }
 
     var body: some View {
         ZStack {
-            // Enhanced card background with gradient and shadow
-            RoundedRectangle(cornerRadius: 24)
+            // Card background
+            RoundedRectangle(cornerRadius: 20)
                 .fill(cardGradient)
-                .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
             
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 // Content side
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(preset.title)
-                            .font(.custom("Amagro-Bold", size: 24))
+                            .font(.custom("AnekGujarati-Bold", size: 20))
                             .foregroundColor(.white)
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                         
                         Text(preset.summary)
-                            .font(.custom("AnekGujarati-Regular", size: 15))
-                            .lineSpacing(2)
-                            .foregroundColor(.white.opacity(0.9))
+                            .font(.custom("AnekGujarati-Regular", size: 14))
+                            .lineSpacing(1)
+                            .foregroundColor(.white)
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     
-                    // Enhanced tags
+                                        // Tags
                     if !preset.tags.isEmpty {
                         HStack(spacing: 8) {
                             ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
                                 Text(tag)
-                                    .font(.custom("AnekGujarati-Medium", size: 11))
+                                    .font(.custom("AnekGujarati-Medium", size: 10))
                                     .foregroundColor(.white)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
                                     .background(
                                         Capsule()
-                                            .fill(Color.white.opacity(0.25))
-                                            .overlay(
-                                                Capsule()
-                                                    .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
-                                            )
+                                            .fill(tagColor(for: preset.title))
                                     )
                             }
                         }
@@ -211,19 +213,14 @@ private struct NoiseCard: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Enhanced icon side
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: 88, height: 88)
-                    
-                    Image(systemName: iconName)
-                        .font(.system(size: 40, weight: .medium))
-                        .foregroundColor(.white)
-                }
+                // Icon side
+                Image(systemName: iconName)
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 80, height: 80)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 20)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

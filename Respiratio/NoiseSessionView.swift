@@ -5,12 +5,13 @@ import MediaPlayer
 struct NoiseSessionView: View {
     let noise: BackgroundNoise
     @StateObject private var engine = NoiseEngine.shared
+    @StateObject private var streak = StreakStore()
     @Environment(\.dismiss) private var dismiss
     
     private let presets: [BNDuration] = [.fiveMin, .fifteenMin, .thirtyMin, .oneHour, .infinite]
     @State private var showCustom = false
     @State private var customMinutes = 20
-    @State private var showCompletionAlert = false
+    @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
     
     var body: some View {
@@ -80,20 +81,24 @@ struct NoiseSessionView: View {
         .navigationBarHidden(true)
         .onAppear { 
             engine.load(noise: noise)
+            // Set up completion callback
+            engine.onSessionComplete = {
+                sessionDuration = engine.elapsed
+                _ = streak.registerCompletion()
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                    showCompletionSheet = true
+                }
+            }
         }
         .sheet(isPresented: $showCustom) { 
             customDurationSheet 
         }
-        .alert("Session Complete", isPresented: $showCompletionAlert) {
-            Button("Continue Listening") {
-                // Stay on current screen, resume if desired
-            }
-            Button("Back to Menu") {
-                dismiss()
-            }
-        } message: {
-            Text("Great session! You listened to \(noise.title) for \(formatDuration(sessionDuration))." + 
-                 (sessionDuration >= 300 ? "\n\nWell done on your focus time! 🎯" : ""))
+        .sheet(isPresented: $showCompletionSheet, onDismiss: {
+            dismiss()
+        }) {
+            NoiseCompletionSheet(streak: streak, noise: noise, sessionDuration: sessionDuration)
+                .presentationDetents([.fraction(0.45), .medium])
+                .presentationDragIndicator(.visible)
         }
     }
     
@@ -194,7 +199,7 @@ struct NoiseSessionView: View {
     private var sleepTimerSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Sleep Timer")
-                .font(.custom("Amagro-Bold", size: 22))
+                .font(.custom("Amagro-Bold", size: 24))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
@@ -346,7 +351,7 @@ struct NoiseSessionView: View {
                 
                 VStack(spacing: 36) {
                     Text("Set Custom Duration")
-                        .font(.custom("Amagro-Bold", size: 26))
+                        .font(.custom("Amagro-Bold", size: 24))
                         .foregroundColor(.white)
                     
                     VStack(spacing: 20) {
@@ -427,6 +432,198 @@ struct NoiseSessionView: View {
         case .oneHour: return "60m"
         case .infinite: return "∞"
         case .minutes(let m): return "\(m)m"
+        }
+    }
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        let seconds = Int(duration) % 60
+        
+        if hours > 0 {
+            return String(format: "%dh %dm", hours, minutes)
+        } else if minutes > 0 {
+            return String(format: "%dm %ds", minutes, seconds)
+        } else {
+            return String(format: "%ds", seconds)
+        }
+    }
+}
+
+// MARK: - Noise Completion Sheet
+
+private struct NoiseCompletionSheet: View {
+    @ObservedObject var streak: StreakStore
+    let noise: BackgroundNoise
+    let sessionDuration: TimeInterval
+    @Environment(\.dismiss) private var dismissSheet
+
+    var body: some View {
+        VStack(spacing: 24) {
+            // Header row with Share on the right
+            HStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Great job!")
+                            .font(.custom("Amagro-Bold", size: 24))
+                            .foregroundColor(.white)
+                        Text("Noise session complete")
+                            .font(.custom("AnekGujarati-Regular", size: 16))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                Spacer()
+                ShareLink(item: shareText,
+                          preview: SharePreview("Noise Session Streak",
+                                                image: Image(systemName: "flame.fill"))) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .font(.custom("AnekGujarati-Medium", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.15))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                .hapticsOnTap(.light)
+            }
+
+            // Session info card
+            VStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    Image(systemName: "speaker.wave.3.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(tintColor(for: noise))
+                    Text("\(noise.title) Session")
+                        .font(.custom("Amagro-Bold", size: 18))
+                        .foregroundColor(.white)
+                    Spacer()
+                }
+                
+                HStack(spacing: 12) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.blue)
+                    Text("Duration: \(formatDuration(sessionDuration))")
+                        .font(.custom("AnekGujarati-Regular", size: 16))
+                        .foregroundColor(.white.opacity(0.8))
+                    Spacer()
+                }
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+            )
+
+            HStack(spacing: 16) {
+                statCard(title: "Current Streak",
+                         value: dayString(streak.streak),
+                         symbol: "flame.fill", tint: .orange)
+                statCard(title: "Best",
+                         value: dayString(streak.bestStreak),
+                         symbol: "trophy.fill", tint: .yellow)
+            }
+
+            if let last = streak.lastCompletionDate {
+                Text("Last session: \(formatted(last))")
+                    .font(.custom("AnekGujarati-Regular", size: 14))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            // Primary action button
+            Button {
+                dismissSheet()
+            } label: {
+                Text("Done")
+                    .font(.custom("AnekGujarati-Bold", size: 17))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [tintColor(for: noise).opacity(0.8), tintColor(for: noise).opacity(0.6)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(tintColor(for: noise).opacity(0.9), lineWidth: 1.5)
+            )
+            .shadow(color: tintColor(for: noise).opacity(0.3), radius: 8, x: 0, y: 4)
+            .hapticsOnTap(.success)
+        }
+        .padding(24)
+        .background(Color(hex: "#1A2B7C"))
+    }
+
+    private var shareText: String {
+        "I just completed a \(noise.title) session • Streak \(streak.streak) \(streak.streak == 1 ? "day" : "days")! 🎧"
+    }
+
+    private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 16))
+                Text(title)
+                    .font(.custom("AnekGujarati-Medium", size: 14))
+                    .foregroundColor(.white.opacity(0.7))
+                Spacer()
+            }
+            .foregroundStyle(tint)
+            Text(value)
+                .font(.custom("Amagro-Bold", size: 20))
+                .foregroundColor(.white)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+
+    private func formatted(_ date: Date) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return "Today" }
+        if cal.isDateInYesterday(date) { return "Yesterday" }
+        let f = DateFormatter(); f.dateStyle = .medium
+        return f.string(from: date)
+    }
+
+    private func dayString(_ n: Int) -> String {
+        "\(max(n, 0)) " + (n == 1 ? "day" : "days")
+    }
+    
+    private func tintColor(for noise: BackgroundNoise) -> Color {
+        switch noise.title {
+        case "White Noise": return Color(hex: "#4A90E2")
+        case "Brown Noise": return Color(hex: "#E67E22")
+        case "Theta Wave": return Color(hex: "#9B59B6")
+        case "Beta Wave": return Color(hex: "#F1C40F")
+        default: return Color(hex: "#4A90E2")
         }
     }
     

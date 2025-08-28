@@ -376,7 +376,7 @@ private struct DoneSheet: View {
         VStack(spacing: 16) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 28))
+                    .font(.system(size: 24))
                     .foregroundStyle(.green)
                 VStack(alignment: .leading, spacing: 6) { // Increased from 2 to 6 for better HIG spacing
                     Text("Nice breathing!").font(.title3.weight(.semibold))

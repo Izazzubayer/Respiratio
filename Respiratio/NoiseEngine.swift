@@ -27,6 +27,9 @@ final class NoiseEngine: ObservableObject {
             updateNowPlaying(isPlaying: isPlaying)
         }
     }
+    
+    // Completion callback
+    var onSessionComplete: (() -> Void)?
 
     // MARK: Computed Properties for UI
     var durationSeconds: TimeInterval? { 
@@ -164,6 +167,10 @@ final class NoiseEngine: ObservableObject {
         }
         if let end = sessionEnd, Date() >= end {
             stop()
+            // Call completion callback
+            DispatchQueue.main.async {
+                self.onSessionComplete?()
+            }
         } else {
             updateNowPlaying(isPlaying: true)
         }
