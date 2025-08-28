@@ -73,10 +73,9 @@ struct MeditationSessionView: View {
     @Environment(\.dismiss) private var dismiss
     
 
-
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
-    
+
     init(preset: MeditationPreset) {
         self.preset = preset
         _model = .init(wrappedValue: MeditationSessionModel(duration: preset.minutes * 60))
@@ -101,7 +100,7 @@ struct MeditationSessionView: View {
             // Background matching app theme
             Color(hex: "#1A2B7C")
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Custom Back Button - positioned at the top
                 HStack {
@@ -140,13 +139,8 @@ struct MeditationSessionView: View {
                 
                 ScrollView {
                     VStack(spacing: 32) {
-                        // Enhanced Header section - left aligned
-                        headerSection
-                    
                         // Enhanced Progress Ring
                         progressSection
-                    
-
                     
                         // Enhanced Transport Section
                         transportSection
@@ -160,9 +154,7 @@ struct MeditationSessionView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear { 
-            // Don't auto-start meditation
-        }
+
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
             sessionDuration = TimeInterval(model.total - model.remaining)
@@ -188,24 +180,7 @@ struct MeditationSessionView: View {
         return Color(red: 0.56, green: 0.59, blue: 0.99)
     }
     
-    // MARK: - Enhanced Header Section - Left Aligned
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(preset.title)
-                .font(.custom("Amagro-Bold", size: 24))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.leading)
-            
-            if !preset.description.isEmpty {
-                Text(preset.description)
-                    .font(.custom("AnekGujarati-Regular", size: 17))
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.leading)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
+
     
     // MARK: - Enhanced Progress Section - Left Aligned
     private var progressSection: some View {
@@ -229,7 +204,7 @@ struct MeditationSessionView: View {
                 .padding(.horizontal, 16)
                 
                 // Progress text and time
-                HStack {
+        HStack {
                     if model.total > 0 {
                         // Current time / Total time
                         Text(timeString(model.total - model.remaining))
@@ -279,7 +254,7 @@ struct MeditationSessionView: View {
                     let selected = duration == preset.minutes
                     
                     if selected {
-                        Button {
+                Button {
                             // Duration is fixed for meditation presets
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         } label: {
@@ -342,7 +317,7 @@ struct MeditationSessionView: View {
                             .font(.custom("AnekGujarati-Medium", size: 15))
                     }
                     .foregroundColor(.white.opacity(0.8))
-                    .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity)
                     .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 18)
@@ -424,11 +399,11 @@ struct MeditationSessionView: View {
     // MARK: - Computed Properties
     
     private var currentProgress: Double {
-        return model.finished ? 1 : model.progress
+            return model.finished ? 1 : model.progress
     }
     
     private var currentStatusText: String {
-        return model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused")
+            return model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused")
     }
 
 
