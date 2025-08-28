@@ -118,7 +118,7 @@ struct NoiseSessionView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(noise.title)
-                .font(.custom("Amagro-Bold", size: 32))
+                .font(.custom("Amagro-Bold", size: 24))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
             
@@ -199,7 +199,7 @@ struct NoiseSessionView: View {
     private var sleepTimerSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Sleep Timer")
-                .font(.custom("Amagro-Bold", size: 24))
+                .font(.custom("AnekGujarati-Bold", size: 20))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
