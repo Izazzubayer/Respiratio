@@ -59,8 +59,8 @@ final class NoiseEngine: ObservableObject {
         }
 
         do {
-            // Configure audio session for background playback
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            // Configure audio session for background playback and control center
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             try AVAudioSession.sharedInstance().setActive(true)
             
             // AVAudioPlayer is resilient & low‑overhead for looping mp3s
@@ -73,6 +73,10 @@ final class NoiseEngine: ObservableObject {
             
             // Setup remote commands for background control
             setupRemoteCommands()
+            setupNowPlaying(isPlaying: false)
+            
+            // Enable background audio
+            UIApplication.shared.beginReceivingRemoteControlEvents()
         } catch {
             print("AVAudioPlayer init error:", error)
         }
@@ -122,6 +126,10 @@ final class NoiseEngine: ObservableObject {
         sessionStart = nil
         sessionEnd = nil
         updateNowPlaying(isPlaying: false)
+        
+        // Disable background audio
+        UIApplication.shared.endReceivingRemoteControlEvents()
+        
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 
@@ -147,7 +155,7 @@ final class NoiseEngine: ObservableObject {
     // MARK: Timer
     private func startTicking() {
         stopTicking()
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        tickTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.tick()
         }
         if let t = tickTimer {
@@ -196,6 +204,7 @@ final class NoiseEngine: ObservableObject {
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: noise.title,
             MPMediaItemPropertyArtist: "Respiratio",
+            MPMediaItemPropertyAlbumTitle: "Background Noise",
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
         ]
         if let total = selectedDuration.timeInterval {
@@ -206,19 +215,136 @@ final class NoiseEngine: ObservableObject {
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
+    
+    private func createNoiseArtwork() -> MPMediaItemArtwork? {
+        let size = CGSize(width: 300, height: 300)
+        
+        return MPMediaItemArtwork(boundsSize: size) { _ in
+            UIGraphicsBeginImageContextWithOptions(size, false, 0)
+            defer { UIGraphicsEndImageContext() }
+            
+            // Create gradient background
+            let context = UIGraphicsGetCurrentContext()
+            let colors = [UIColor.systemIndigo.cgColor, UIColor.systemPurple.cgColor]
+            let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: nil)
+            
+            context?.drawLinearGradient(gradient!, start: CGPoint.zero, end: CGPoint(x: size.width, y: size.height), options: [])
+            
+            // Add noise symbol
+            let symbolSize: CGFloat = 120
+            let symbolRect = CGRect(
+                x: (size.width - symbolSize) / 2,
+                y: (size.height - symbolSize) / 2,
+                width: symbolSize,
+                height: symbolSize
+            )
+            
+            let config = UIImage.SymbolConfiguration(pointSize: symbolSize, weight: .light)
+            let symbol = UIImage(systemName: "waveform", withConfiguration: config)
+            UIColor.white.setFill()
+            symbol?.draw(in: symbolRect, blendMode: .normal, alpha: 0.8)
+            
+            return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
+        }
+    }
 
     private func setupRemoteCommands() {
         let c = MPRemoteCommandCenter.shared()
-        c.playCommand.addTarget { [weak self] _ in self?.play(); return .success }
-        c.pauseCommand.addTarget { [weak self] _ in self?.pause(); return .success }
-        c.stopCommand.addTarget { [weak self] _ in self?.stop(); return .success }
+        
+        // Play command
+        c.playCommand.addTarget { [weak self] _ in 
+            self?.play(); 
+            return .success 
+        }
+        
+        // Pause command
+        c.pauseCommand.addTarget { [weak self] _ in 
+            self?.pause(); 
+            return .success 
+        }
+        
+        // Stop command
+        c.stopCommand.addTarget { [weak self] _ in 
+            self?.stop(); 
+            return .success 
+        }
+        
+        // Toggle play/pause
         c.togglePlayPauseCommand.addTarget { [weak self] _ in
             guard let self else { return .commandFailed }
             self.isPlaying ? self.pause() : self.play()
             return .success
         }
-        c.changePlaybackPositionCommand.isEnabled = false
+        
+        // Skip forward (30 seconds)
+        c.skipForwardCommand.addTarget { [weak self] event in
+            guard let event = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+            self?.nudge(by: event.interval)
+            return .success
+        }
+        c.skipForwardCommand.preferredIntervals = [30]
+        
+        // Skip backward (30 seconds)
+        c.skipBackwardCommand.addTarget { [weak self] event in
+            guard let event = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+            self?.nudge(by: -event.interval)
+            return .success
+        }
+        c.skipBackwardCommand.preferredIntervals = [30]
+        
+        // Seek command (for timed sessions)
+        if selectedDuration.timeInterval != nil {
+            c.changePlaybackPositionCommand.isEnabled = true
+            c.changePlaybackPositionCommand.addTarget { [weak self] event in
+                guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+                self?.seek(fraction: event.positionTime / (self?.selectedDuration.timeInterval ?? 1))
+                return .success
+            }
+        } else {
+                    c.changePlaybackPositionCommand.isEnabled = false
     }
+    
+    // MARK: - App State Handling
+    func handleAppDidEnterBackground() {
+        // Ensure audio session stays active in background
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
+    
+    func handleAppWillEnterForeground() {
+        // Refresh audio session when returning to foreground
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Failed to refresh audio session:", error)
+        }
+    }
+    
+    func handleAudioInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+        
+        switch type {
+        case .began:
+            // Audio interruption began (e.g., phone call)
+            if isPlaying {
+                pause()
+            }
+        case .ended:
+            // Audio interruption ended
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) && isPlaying {
+                play()
+            }
+        @unknown default:
+            break
+        }
+    }
+}
 }
 
 // MARK: - MPVolumeView Extension for System Volume Control
