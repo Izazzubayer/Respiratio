@@ -270,63 +270,6 @@ struct NoiseSessionView: View {
             .frame(width: 140, height: 140)
             .accessibilityLabel(engine.isPlaying ? "Pause audio" : "Play audio")
             .accessibilityHint(engine.isPlaying ? "Pauses the current audio" : "Starts playing the audio")
-            
-            // Control buttons row
-            HStack(spacing: 40) {
-                // Stop button - redesigned
-                Button(role: .destructive) {
-                    sessionDuration = engine.elapsed
-                    engine.stop()
-                    showCompletionAlert = true
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                } label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: Color.red.opacity(0.3), radius: 10, x: 0, y: 5)
-                        
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: 24, weight: .medium))
-                            .foregroundColor(.white)
-                    }
-                }
-                .frame(width: 80, height: 80)
-                .accessibilityLabel("Stop audio")
-                .accessibilityHint("Ends the current session")
-                
-                // Skip forward button
-                Button {
-                    // Add skip forward functionality if needed
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                } label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                        
-                        Image(systemName: "forward.fill")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.white)
-                    }
-                }
-                .frame(width: 80, height: 80)
-                .accessibilityLabel("Skip forward")
-            }
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
