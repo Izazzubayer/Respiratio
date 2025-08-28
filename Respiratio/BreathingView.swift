@@ -177,7 +177,7 @@ private struct BreathingCard: View {
                         .padding(.horizontal, 12)
                         .background(
                             Capsule()
-                                .fill(tagColors[preset.colorIndex % tagColors.count])
+                                .fill(Color.black.opacity(0.3))
                         )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

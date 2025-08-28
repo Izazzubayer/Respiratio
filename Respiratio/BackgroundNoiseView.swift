@@ -42,7 +42,7 @@ private let noisePresets: [NoisePreset] = [
     .init(
         title: "Theta Wave",
         summary: "Slow rhythmic tones associated with meditative and drowsy states.",
-        tags: ["Relaxation", "Meditation"],
+        tags: ["Meditation", "Deep Sleep"],
         fileName: "theta-wave",
         colorIndex: 2,
         noise: NoiseCatalog.all[2]
@@ -50,7 +50,7 @@ private let noisePresets: [NoisePreset] = [
     .init(
         title: "Beta Wave",
         summary: "Faster rhythmic tones associated with alertness and concentration.",
-        tags: ["Focus", "Productivity"],
+        tags: ["Energy", "Concentration"],
         fileName: "beta-wave",
         colorIndex: 3,
         noise: NoiseCatalog.all[3]
@@ -112,36 +112,36 @@ struct BackgroundNoiseView: View {
 private struct NoiseCard: View {
     let preset: NoisePreset
     
-    // Enhanced color scheme for each card
+    // Color scheme for each card
     private var cardGradient: LinearGradient {
         switch preset.title {
         case "White Noise":
             return LinearGradient(
-                colors: [Color(hex: "#4A90E2"), Color(hex: "#357ABD")],
+                colors: [Color(red: 0.56, green: 0.59, blue: 0.99), Color(red: 0.56, green: 0.59, blue: 0.99)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case "Brown Noise":
             return LinearGradient(
-                colors: [Color(hex: "#E67E22"), Color(hex: "#D35400")],
+                colors: [Color(red: 0.98, green: 0.43, blue: 0.35), Color(red: 0.98, green: 0.43, blue: 0.35)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case "Theta Wave":
             return LinearGradient(
-                colors: [Color(hex: "#9B59B6"), Color(hex: "#8E44AD")],
+                colors: [Color(red: 0.25, green: 0.25, blue: 0.31), Color(red: 0.25, green: 0.25, blue: 0.31)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case "Beta Wave":
             return LinearGradient(
-                colors: [Color(hex: "#F1C40F"), Color(hex: "#F39C12")],
+                colors: [Color(red: 0.42, green: 0.70, blue: 0.56), Color(red: 0.42, green: 0.70, blue: 0.56)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         default:
             return LinearGradient(
-                colors: [Color(hex: "#4A90E2"), Color(hex: "#357ABD")],
+                colors: [Color(red: 0.56, green: 0.59, blue: 0.99), Color(red: 0.56, green: 0.59, blue: 0.99)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -159,14 +159,14 @@ private struct NoiseCard: View {
         }
     }
     
-    // Tag colors for each noise type
+    // Tag colors for each noise type - semi-dark for better visibility
     private func tagColor(for title: String) -> Color {
         switch title {
-        case "White Noise": return Color(hex: "#4A90E2")
-        case "Brown Noise": return Color(hex: "#E67E22")
-        case "Theta Wave": return Color(hex: "#9B59B6")
-        case "Beta Wave": return Color(hex: "#F1C40F")
-        default: return Color(hex: "#4A90E2")
+        case "White Noise": return Color.black.opacity(0.3) // Semi-dark for blue background
+        case "Brown Noise": return Color.black.opacity(0.3) // Semi-dark for orange background
+        case "Theta Wave": return Color.black.opacity(0.3) // Semi-dark for dark background
+        case "Beta Wave": return Color.black.opacity(0.3) // Semi-dark for green background
+        default: return Color.black.opacity(0.3)
         }
     }
 

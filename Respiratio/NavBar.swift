@@ -39,7 +39,7 @@ struct NavBar: View {
     
     var body: some View {
         ZStack {
-            // Full background color
+            // Full background color - extend beyond frame bounds
             Color(hex: "#111C52")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(.all, edges: .bottom)
@@ -48,7 +48,7 @@ struct NavBar: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color(hex: "#1A2B7C"))
                 .frame(width: tabWidth, height: 82)
-                .offset(x: selectedTabOffset, y: 0)
+                .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
                     .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.3),
                     value: selectedTab
@@ -72,10 +72,12 @@ struct NavBar: View {
                     }
                 }
             }
-            .offset(x: 0, y: 0)
+            .offset(x: 0, y: -9.5)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 100)
+        .frame(height: 128)
+        .cornerRadius(0)
+        .clipped() // Clip any overflow
         .ignoresSafeArea(.all, edges: .bottom)
     }
 }
@@ -108,7 +110,7 @@ private struct NavBarItem: View {
                     .fixedSize(horizontal: false, vertical: true) // Ensure text fits
                     .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
             }
-            .padding(EdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24))
+            .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
             .frame(width: 122)
         }
         .buttonStyle(PlainButtonStyle())

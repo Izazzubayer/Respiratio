@@ -220,7 +220,7 @@ private struct MeditationCard: View {
                                     .padding(.horizontal, 12)
                                     .background(
                                         Capsule()
-                                            .fill(tagColors[colorIndex % tagColors.count])
+                                            .fill(Color.black.opacity(0.3))
                                     )
                             }
                         }

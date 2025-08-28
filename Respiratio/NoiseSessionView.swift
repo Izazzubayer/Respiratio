@@ -107,9 +107,9 @@ struct NoiseSessionView: View {
     private func tintColor(for noise: BackgroundNoise) -> Color {
         switch noise.title {
         case "White Noise": return Color(hex: "#4A90E2")
-        case "Brown Noise": return Color(hex: "#E67E22")
-        case "Theta Wave": return Color(hex: "#9B59B6")
-        case "Beta Wave": return Color(hex: "#F1C40F")
+        case "Brown Noise": return Color(hex: "#4A90E2")
+        case "Theta Wave": return Color(hex: "#4A90E2")
+        case "Beta Wave": return Color(hex: "#4A90E2")
         default: return Color(hex: "#4A90E2")
         }
     }
