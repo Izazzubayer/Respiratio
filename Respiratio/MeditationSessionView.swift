@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import AVKit
 
 // MARK: - ViewModel
 
@@ -68,7 +69,7 @@ final class MeditationSessionModel: ObservableObject {
 struct MeditationSessionView: View {
     let preset: MeditationPreset
     @StateObject private var model: MeditationSessionModel
-    @StateObject private var audioEngine = MeditationAudioEngine.shared
+    @ObservedObject private var audioEngine = MeditationAudioEngine.shared
     @StateObject private var streak = StreakStore()
     @Environment(\.dismiss) private var dismiss
     
@@ -77,6 +78,7 @@ struct MeditationSessionView: View {
     @State private var customMinutes = 20
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
+    @State private var volume: Float = 0.8
 
     init(preset: MeditationPreset) {
         self.preset = preset
@@ -140,17 +142,14 @@ struct MeditationSessionView: View {
                 }
                 
                 ScrollView {
-                    VStack(spacing: 32) {
-                        // Enhanced Header section - left aligned
+                    VStack(spacing: 40) {
+                        // Header section - left aligned
                         headerSection
                     
-                        // Enhanced Progress Ring
+                        // Progress section - centered like Apple Media Player
                         progressSection
                     
-                        // Enhanced Duration Timer chips
-                        // durationSection
-                    
-                        // Enhanced Transport Section
+                        // Transport Section - Apple Media Player style
                         transportSection
                     
                         Spacer(minLength: 40)
@@ -185,6 +184,10 @@ struct MeditationSessionView: View {
                 showCompletionSheet = true
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
+            // Force UI update when audio route changes
+            // This will refresh the audio output display
+        }
         .sheet(isPresented: $showCustom) { 
             customDurationSheet 
         }
@@ -202,6 +205,57 @@ struct MeditationSessionView: View {
     private func tintColor(for preset: MeditationPreset) -> Color {
         // Use a consistent meditation color
         return Color(red: 0.29, green: 0.56, blue: 0.89)
+    }
+    
+    // MARK: - Audio Output Detection
+    private var currentAudioOutputIcon: String {
+        let session = AVAudioSession.sharedInstance()
+        let outputs = session.currentRoute.outputs
+        
+        for output in outputs {
+            switch output.portType {
+            case .bluetoothA2DP, .bluetoothLE, .bluetoothHFP:
+                return "airpods"
+            case .headphones:
+                return "headphones"
+            case .airPlay:
+                return "airplayaudio"
+            case .builtInSpeaker:
+                return "speaker.wave.3"
+            default:
+                break
+            }
+        }
+        return "airplayaudio"
+    }
+    
+    private var currentAudioOutputName: String {
+        let session = AVAudioSession.sharedInstance()
+        let outputs = session.currentRoute.outputs
+        
+        for output in outputs {
+            switch output.portType {
+            case .bluetoothA2DP, .bluetoothLE, .bluetoothHFP:
+                // Check if it's AirPods specifically
+                if output.portName.lowercased().contains("airpods") || 
+                   output.portName.lowercased().contains("airpod") {
+                    return "AirPods"
+                } else if output.portName.lowercased().contains("bluetooth") {
+                    return "Bluetooth"
+                } else {
+                    return output.portName.isEmpty ? "Bluetooth" : output.portName
+                }
+            case .headphones:
+                return output.portName.isEmpty ? "Headphones" : output.portName
+            case .airPlay:
+                return output.portName.isEmpty ? "AirPlay" : output.portName
+            case .builtInSpeaker:
+                return "iPhone"
+            default:
+                break
+            }
+        }
+        return "iPhone"
     }
     
     // MARK: - Enhanced Header Section - Left Aligned
@@ -223,12 +277,12 @@ struct MeditationSessionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Enhanced Progress Section - Left Aligned
+        // MARK: - Apple Media Player Style Progress Section
     private var progressSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Real-time progress bar
-            VStack(spacing: 12) {
-                // Progress bar container - Apple Media Player style
+        VStack(spacing: 20) {
+            // Progress bar with time display - Apple Media Player style
+            VStack(spacing: 16) {
+                // Progress bar container
                 ZStack(alignment: .leading) {
                     // Background track
                     RoundedRectangle(cornerRadius: 4)
@@ -237,58 +291,50 @@ struct MeditationSessionView: View {
                     
                     // Progress fill
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(tintColor(for: preset))
+                        .fill(Color.white)
                         .frame(width: max(0, min(1, currentProgress)) * (UIScreen.main.bounds.width - 64), height: 4)
                         .animation(.easeInOut(duration: 0.1), value: currentProgress)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 16)
                 
-                                // Progress text and time
-        HStack {
-                if preset.hasAudio {
-                        // Audio-guided meditation time display
+                // Time display - Apple Media Player style
+                HStack {
+                    if preset.hasAudio {
+                        // Current time
                         Text(formatTime(audioEngine.currentTime))
-                            .font(.custom("AnekGujarati-Bold", size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
                         
-                        Text("/")
-                            .font(.custom("AnekGujarati-Regular", size: 16))
-                            .foregroundColor(.white.opacity(0.5))
+                        Spacer()
                         
-                        Text(formatTime(audioEngine.duration))
-                            .font(.custom("AnekGujarati-Bold", size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                        // Remaining time (negative format like Apple)
+                        Text("-\(formatTime(audioEngine.duration - audioEngine.currentTime))")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
                     } else if model.total > 0 {
-                        // Timer-based meditation time display
+                        // Current time
                         Text(timeString(model.total - model.remaining))
-                            .font(.custom("AnekGujarati-Bold", size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
                         
-                        Text("/")
-                            .font(.custom("AnekGujarati-Regular", size: 16))
-                            .foregroundColor(.white.opacity(0.5))
+                        Spacer()
                         
-                        Text(timeString(model.total))
-                            .font(.custom("AnekGujarati-Bold", size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                        // Remaining time (negative format like Apple)
+                        Text("-\(timeString(model.remaining))")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
                     } else {
                         // No duration
                         Text("∞")
-                            .font(.custom("AnekGujarati-Bold", size: 18))
-                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundColor(.white)
                     }
-                    
-                    Spacer()
-                    
-                    // Status text
-                    Text(currentStatusText)
-                        .font(.custom("AnekGujarati-Medium", size: 16))
-                        .foregroundColor(.white.opacity(0.8))
                 }
+                .padding(.horizontal, 16)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Enhanced Duration Section - Left Aligned
@@ -390,89 +436,188 @@ struct MeditationSessionView: View {
         .accessibilityLabel("Session Duration")
     }
     
-    // MARK: - Enhanced Transport Section - Redesigned Buttons
+    // MARK: - Apple Media Player Style Transport Section
     private var transportSection: some View {
-        VStack(spacing: 24) {
-            // Main play/pause button - redesigned
-            Button {
-                if preset.hasAudio {
-                    // Handle audio-guided meditation
-                    if audioEngine.isPlaying {
-                        audioEngine.pause()
+        VStack(spacing: 32) {
+            // Main playback controls - Apple Media Player style
+            HStack(spacing: 40) {
+                // Rewind 30 seconds button
+                Button {
+                    if preset.hasAudio {
+                        audioEngine.skipBackward(30)
                     } else {
-                        audioEngine.play()
+                        // For timer-based meditation, skip back 30 seconds
+                        let newTime = max(0, model.total - model.remaining - 30)
+                        model.remaining = model.total - newTime
                     }
-                } else {
-                    // Handle timer-based meditation
-                    if model.isRunning {
-                        model.pause()
-                    } else {
-                        model.start()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 60, height: 60)
+                        
+                        VStack(spacing: 2) {
+                            Image(systemName: "gobackward.30")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                        }
                     }
                 }
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            } label: {
-                ZStack {
-                    // Outer glow ring
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [tintColor(for: preset).opacity(0.3), Color.clear],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 140, height: 140)
-                    
-                    // Main button background
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [tintColor(for: preset), tintColor(for: preset).opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                        .shadow(color: tintColor(for: preset).opacity(0.4), radius: 20, x: 0, y: 10)
-                    
-                    // Play/Pause icon
+                .accessibilityLabel("Skip backward 30 seconds")
+                
+                // Main play/pause button - Original design (like noise player)
+                Button {
                     if preset.hasAudio {
                         if audioEngine.isPlaying {
-                            Image(systemName: "pause.fill")
-                                .font(.system(size: 40, weight: .medium))
-                                .foregroundColor(.white)
+                            audioEngine.pause()
                         } else {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 40, weight: .medium))
-                                .foregroundColor(.white)
-                                .offset(x: 2)
+                            audioEngine.play()
                         }
                     } else {
                         if model.isRunning {
-                            Image(systemName: "pause.fill")
-                                .font(.system(size: 40, weight: .medium))
-                                .foregroundColor(.white)
+                            model.pause()
                         } else {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 40, weight: .medium))
-                                .foregroundColor(.white)
-                                .offset(x: 2)
+                            model.start()
+                        }
+                    }
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                } label: {
+                    ZStack {
+                        // Outer glow ring
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [tintColor(for: preset).opacity(0.3), Color.clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 140, height: 140)
+                        
+                        // Main button background
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [tintColor(for: preset), tintColor(for: preset).opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 120, height: 120)
+                            .shadow(color: tintColor(for: preset).opacity(0.4), radius: 20, x: 0, y: 10)
+                        
+                        // Play/Pause icon
+                        if preset.hasAudio {
+                            if audioEngine.isPlaying {
+                                Image(systemName: "pause.fill")
+                                    .font(.system(size: 40, weight: .medium))
+                                    .foregroundColor(.white)
+                            } else {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 40, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .offset(x: 2)
+                            }
+                        } else {
+                            if model.isRunning {
+                                Image(systemName: "pause.fill")
+                                    .font(.system(size: 40, weight: .medium))
+                                    .foregroundColor(.white)
+                            } else {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 40, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .offset(x: 2)
+                            }
                         }
                     }
                 }
+                .accessibilityLabel(
+                    preset.hasAudio 
+                        ? (audioEngine.isPlaying ? "Pause guided meditation" : "Start guided meditation")
+                        : (model.isRunning ? "Pause meditation" : "Start meditation")
+                )
+                
+                // Fast forward 30 seconds button
+                Button {
+                    if preset.hasAudio {
+                        audioEngine.skipForward(30)
+                    } else {
+                        // For timer-based meditation, skip forward 30 seconds
+                        let newTime = min(model.total, model.total - model.remaining + 30)
+                        model.remaining = model.total - newTime
+                    }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 60, height: 60)
+                        
+                        VStack(spacing: 2) {
+                            Image(systemName: "goforward.30")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .accessibilityLabel("Skip forward 30 seconds")
             }
-            .frame(width: 140, height: 140)
-            .accessibilityLabel(
-                preset.hasAudio 
-                    ? (audioEngine.isPlaying ? "Pause guided meditation" : "Start guided meditation")
-                    : (model.isRunning ? "Pause meditation" : "Start meditation")
+            
+            // Volume control - Apple Media Player style
+            // VStack(spacing: 12) {
+            //     HStack(spacing: 16) {
+            //         // Low volume speaker icon
+            //         Image(systemName: "speaker.wave.1")
+            //             .font(.system(size: 16, weight: .medium))
+            //             .foregroundColor(.white.opacity(0.8))
+            //         
+            //         // Volume slider
+            //         Slider(value: $volume, in: 0...1) { editing in
+            //             if editing {
+            //             // Update volume when sliding
+            //             if preset.hasAudio {
+            //                 audioEngine.volume = volume
+            //             }
+            //         }
+            //     }
+            //         .accentColor(.white)
+            //         
+            //         // High volume speaker icon
+            //         Image(systemName: "speaker.wave.3")
+            //             .font(.system(size: 16, weight: .medium))
+            //             .foregroundColor(.white.opacity(0.8))
+            //     }
+            //     .padding(.horizontal, 16)
+            // }
+            
+            // Output device selector - Apple Media Player style
+            HStack(spacing: 8) {
+                Image(systemName: currentAudioOutputIcon)
+                    .font(.system(size: 16, weight: .medium))
+                Text(currentAudioOutputName)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             )
-            .accessibilityHint(
-                preset.hasAudio
-                    ? (audioEngine.isPlaying ? "Pauses the guided meditation audio" : "Starts the guided meditation audio")
-                    : (model.isRunning ? "Pauses the current meditation" : "Starts the meditation session")
+            .overlay(
+                // Native AirPlay button overlay
+                AirPlayButton()
+                    .frame(width: 200, height: 44)
+                    .opacity(0.01) // Nearly invisible but tappable
             )
+            .accessibilityLabel("Select audio output device")
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -606,6 +751,36 @@ struct MeditationSessionView: View {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
+    // MARK: - AirPlay Integration
+    private func showAirPlayMenu() {
+        #if os(iOS)
+        // Create and present the native AirPlay route picker
+        let routePicker = AVRoutePickerView()
+        routePicker.backgroundColor = .clear
+        routePicker.tintColor = .white
+        
+        // Find the button in the route picker and trigger it
+        if let button = routePicker.subviews.first(where: { $0 is UIButton }) as? UIButton {
+            button.sendActions(for: .touchUpInside)
+        }
+        #endif
+    }
+}
+
+// MARK: - Native AirPlay Button
+struct AirPlayButton: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let routePicker = AVRoutePickerView()
+        routePicker.backgroundColor = .clear
+        routePicker.tintColor = .white
+        routePicker.activeTintColor = .white
+        return routePicker
+    }
+    
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
+        // Update the view if needed
     }
 }
 

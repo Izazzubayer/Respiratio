@@ -11,7 +11,7 @@ import AVFoundation
 
 @main
 struct RespiratioApp: App {
-    @StateObject private var audioEngine = MeditationAudioEngine.shared
+    private let audioEngine = MeditationAudioEngine.shared
     
     init() {
         configureAudioSession()
