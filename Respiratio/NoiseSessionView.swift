@@ -94,49 +94,61 @@ struct NoiseSessionView: View {
     // MARK: - Enhanced Progress Section - Left Aligned
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Audio frequency progress bar
+            // Real-time progress bar
             VStack(spacing: 12) {
                 // Progress bar container
-                ZStack {
+                ZStack(alignment: .leading) {
                     // Background track
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.white.opacity(0.1))
-                        .frame(height: 80)
+                        .frame(height: 8)
                     
-                    // Audio frequency bars
-                    HStack(spacing: 3) {
-                        ForEach(0..<32, id: \.self) { index in
-                            let barHeight = getBarHeight(for: index, progress: engine.progress)
-                            
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            tintColor(for: noise),
-                                            tintColor(for: noise).opacity(0.7)
-                                        ],
-                                        startPoint: .bottom,
-                                        endPoint: .top
-                                    )
-                                )
-                                .frame(width: 8, height: barHeight)
-                                .animation(.easeInOut(duration: 0.3), value: barHeight)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
+                    // Progress fill
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    tintColor(for: noise),
+                                    tintColor(for: noise).opacity(0.7)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(0, min(1, engine.progress)) * (UIScreen.main.bounds.width - 64), height: 8)
+                        .animation(.easeInOut(duration: 0.1), value: engine.progress)
+                    
+                    // Progress indicator dot
+                    Circle()
+                        .fill(tintColor(for: noise))
+                        .frame(width: 16, height: 16)
+                        .shadow(color: tintColor(for: noise).opacity(0.5), radius: 4, x: 0, y: 2)
+                        .offset(x: max(0, min(1, engine.progress)) * (UIScreen.main.bounds.width - 64) - 8)
+                        .animation(.easeInOut(duration: 0.1), value: engine.progress)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
                 
-                // Progress text
+                // Progress text and time
                 HStack {
-                    if engine.durationSeconds == nil {
+                    if let duration = engine.durationSeconds {
+                        // Current time / Total time
+                        Text(formatTime(engine.elapsed))
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("/")
+                            .font(.custom("AnekGujarati-Regular", size: 16))
+                            .foregroundColor(.white.opacity(0.5))
+                        
+                        Text(formatTime(duration))
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                    } else {
+                        // Infinite duration
                         Text("∞")
                             .font(.custom("AnekGujarati-Bold", size: 18))
                             .foregroundColor(.white.opacity(0.7))
-                    } else {
-                        Text("\(Int(engine.progress * 100))%")
-                            .font(.custom("AnekGujarati-Bold", size: 18))
-                            .foregroundColor(tintColor(for: noise))
                     }
                     
                     Spacer()
@@ -151,29 +163,11 @@ struct NoiseSessionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Helper function for bar heights
-    private func getBarHeight(for index: Int, progress: Double) -> CGFloat {
-        let baseHeight: CGFloat = 20
-        let maxHeight: CGFloat = 60
-        
-        // Calculate how much of the progress bar this index represents
-        let barProgress = Double(index) / 31.0 // 0 to 1 across 32 bars (0-31)
-        
-        // Only show bars up to the current progress
-        if barProgress > progress {
-            return baseHeight
-        }
-        
-        // Create a wave-like pattern that's more pronounced for active bars
-        let waveOffset = sin(Double(index) * 0.4) * 0.4
-        let progressIntensity = 1.0 - (barProgress / progress) // Higher intensity for earlier bars
-        
-        // Calculate height based on progress and wave pattern
-        let progressHeight = baseHeight + (maxHeight - baseHeight) * progressIntensity
-        let waveHeight = progressHeight * (1.0 + waveOffset)
-        
-        // Ensure height is within bounds
-        return max(baseHeight, min(maxHeight, waveHeight))
+    // MARK: - Helper function to format time
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        let remainingSeconds = Int(seconds) % 60
+        return String(format: "%d:%02d", minutes, remainingSeconds)
     }
     
     // MARK: - Enhanced Sleep Timer Section - Left Aligned
