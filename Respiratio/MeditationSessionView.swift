@@ -82,7 +82,7 @@ struct MeditationSessionView: View {
 
     init(preset: MeditationPreset) {
         self.preset = preset
-        _model = .init(wrappedValue: MeditationSessionModel(duration: preset.minutes * 60))
+        _model = .init(wrappedValue: MeditationSessionModel(duration: Int(preset.duration)))
     }
     
     // Legacy initializer for compatibility
@@ -90,7 +90,9 @@ struct MeditationSessionView: View {
         self.preset = MeditationPreset(
             title: "Meditation",
             description: "A \(duration / 60)-minute meditation session for relaxation and focus.",
-            minutes: duration / 60,
+            duration: TimeInterval(duration),
+            category: .mindfulness,
+            difficulty: duration <= 300 ? .beginner : (duration <= 900 ? .intermediate : .advanced),
             symbol: "timer",
             audioFileName: nil,
             hasAudio: false,
@@ -355,7 +357,7 @@ struct MeditationSessionView: View {
                 GridItem(.flexible())
             ], spacing: 16) {
                 ForEach(Array(presets.enumerated()), id: \.offset) { index, duration in
-                    let selected = duration == preset.minutes
+                    let selected = duration == Int(preset.duration / 60)
                     
                     if selected {
                 Button {
@@ -899,6 +901,10 @@ private struct VolumeControlSheet: View {
 private struct CompletionSheet: View {
     @ObservedObject var streak: StreakStore
     @Environment(\.dismiss) private var dismissSheet
+    
+    private var shareText: String {
+        "I just meditated • Streak \(streak.streak) \(streak.streak == 1 ? "day" : "days")! 🧘‍♀️"
+    }
 
     var body: some View {
         VStack(spacing: 18) {
@@ -924,13 +930,20 @@ private struct CompletionSheet: View {
                 .hapticsOnTap(.light)
             }
 
-            HStack(spacing: 14) {
-                statCard(title: "Current Streak",
-                         value: dayString(streak.streak),
-                         symbol: "flame.fill", tint: .orange)
-                statCard(title: "Best",
-                         value: dayString(streak.bestStreak),
-                         symbol: "trophy.fill", tint: .yellow)
+            HStack(spacing: DesignSystem.Spacing.md) {
+                StreakCard(
+                    title: "Current Streak",
+                    value: dayString(streak.streak),
+                    symbol: "flame.fill",
+                    tint: Color.orange
+                )
+                
+                StreakCard(
+                    title: "Best",
+                    value: dayString(streak.bestStreak),
+                    symbol: "trophy.fill",
+                    tint: Color.yellow
+                )
             }
 
             if let last = streak.lastCompletionDate {
@@ -953,24 +966,9 @@ private struct CompletionSheet: View {
         .padding(20)
     }
 
-    private var shareText: String {
-        "I just meditated • Streak \(streak.streak) \(streak.streak == 1 ? "day" : "days")! 🧘‍♀️"
-    }
+    // shareText function removed - now defined inside MeditationCompletionSheet
 
-    private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: symbol)
-                Text(title).font(.caption).foregroundStyle(.secondary)
-                Spacer()
-            }
-            .foregroundStyle(tint)
-            Text(value).font(.headline)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.thinMaterial))
-    }
+    // statCard function removed - now using StreakCard component from DesignSystem
 
     private func formatted(_ date: Date) -> String {
         let cal = Calendar.current
@@ -994,19 +992,19 @@ private struct MeditationCompletionSheet: View {
     @Environment(\.dismiss) private var dismissSheet
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignSystem.Spacing.lg) {
             // Header row with Share on the right
-            HStack(spacing: 8) {
-                HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
+                HStack(spacing: DesignSystem.Spacing.sm) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 24))
                         .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
                         Text("Great job!")
-                            .font(.custom("Amagro-Bold", size: 20))
+                            .font(DesignSystem.Typography.title3)
                             .foregroundColor(.white)
                         Text("Meditation complete")
-                            .font(.custom("AnekGujarati-Regular", size: 14))
+                            .font(DesignSystem.Typography.caption1)
                             .foregroundColor(.white.opacity(0.8))
                     }
                 }
@@ -1015,94 +1013,60 @@ private struct MeditationCompletionSheet: View {
                           preview: SharePreview("Meditation Session Streak",
                                                 image: Image(systemName: "flame.fill"))) {
                     Label("Share", systemImage: "square.and.arrow.up")
-                        .font(.custom("AnekGujarati-Medium", size: 14))
+                        .font(DesignSystem.Typography.caption1)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, DesignSystem.Spacing.md)
+                        .padding(.vertical, DesignSystem.Spacing.sm)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.15))
+                            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
+                                .fill(DesignSystem.Colors.overlayStrong)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
+                                .stroke(DesignSystem.Colors.overlayBorder, lineWidth: 1)
                         )
                 }
                 .hapticsOnTap(.light)
             }
 
             // Session info card
-            VStack(spacing: 12) {
-                HStack(spacing: 8) {
-                    Image(systemName: "brain.head.profile")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color(red: 0.56, green: 0.59, blue: 0.99))
-                    Text("\(preset.title) Session")
-                        .font(.custom("Amagro-Bold", size: 16))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                    Spacer()
-                }
-                
-                HStack(spacing: 8) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.blue)
-                    Text("Duration: \(formatDuration(sessionDuration))")
-                        .font(.custom("AnekGujarati-Regular", size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                    Spacer()
-                }
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.08))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
+            SessionInfoCard(
+                title: "\(preset.title) Session",
+                duration: formatDuration(sessionDuration),
+                brainIconColor: DesignSystem.Colors.primaryLight
             )
 
-            HStack(spacing: 12) {
-                statCard(title: "Current Streak",
-                         value: dayString(streak.streak),
-                         symbol: "flame.fill", tint: .orange)
-                statCard(title: "Best",
-                         value: dayString(streak.bestStreak),
-                         symbol: "trophy.fill", tint: .yellow)
+            HStack(spacing: DesignSystem.Spacing.md) {
+                StreakCard(
+                    title: "Current Streak",
+                    value: dayString(streak.streak),
+                    symbol: "flame.fill",
+                    tint: Color.orange
+                )
+                
+                StreakCard(
+                    title: "Best",
+                    value: dayString(streak.bestStreak),
+                    symbol: "trophy.fill",
+                    tint: Color.yellow
+                )
             }
 
             if let last = streak.lastCompletionDate {
                 Text("Last session: \(formatted(last))")
-                    .font(.custom("AnekGujarati-Regular", size: 12))
+                    .font(DesignSystem.Typography.caption2)
                     .foregroundColor(.white.opacity(0.6))
             }
 
             // Primary action button
-            Button {
+            PrimaryButton(title: "Done") {
                 dismissSheet()
-            } label: {
-                Text("Done")
-                    .font(.custom("AnekGujarati-Bold", size: 16))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(red: 0.29, green: 0.56, blue: 0.89))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(red: 0.29, green: 0.56, blue: 0.89).opacity(0.9), lineWidth: 1.5)
-            )
-            .shadow(color: Color(red: 0.29, green: 0.56, blue: 0.89).opacity(0.3), radius: 6, x: 0, y: 3)
             .hapticsOnTap(.success)
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.xl)
         .background(
-            Color(hex: "#1A2B7C")
+            DesignSystem.Colors.primaryDark
                 .ignoresSafeArea()
         )
     }
@@ -1111,32 +1075,7 @@ private struct MeditationCompletionSheet: View {
         "I just completed a \(preset.title) meditation • Streak \(streak.streak) \(streak.streak == 1 ? "day" : "days")! 🧘‍♀️"
     }
 
-    private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: symbol)
-                    .font(.system(size: 14))
-                Text(title)
-                    .font(.custom("AnekGujarati-Medium", size: 12))
-                    .foregroundColor(.white.opacity(0.7))
-                Spacer()
-            }
-            .foregroundStyle(tint)
-            Text(value)
-                .font(.custom("Amagro-Bold", size: 18))
-                .foregroundColor(.white)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
-        )
-    }
+    // statCard function removed - now using StreakCard component from DesignSystem
 
     private func formatted(_ date: Date) -> String {
         let cal = Calendar.current
@@ -1169,7 +1108,9 @@ private struct MeditationCompletionSheet: View {
     MeditationSessionView(preset: MeditationPreset(
         title: "Quick Reset",
         description: "A quick 2-minute meditation to reset your mind.",
-        minutes: 2,
+        duration: TimeInterval(2 * 60), // 2 minutes in seconds
+        category: .mindfulness,
+        difficulty: .beginner,
         symbol: "timer",
         audioFileName: nil,
         hasAudio: false,

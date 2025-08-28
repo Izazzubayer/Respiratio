@@ -11,20 +11,54 @@ import UIKit
 #endif
 
 // MARK: - Data
+// Note: MeditationPreset is now defined in Domain/Entities/MeditationSession.swift
+// This file uses the new domain entity for consistency
 
-struct MeditationPreset: Identifiable, Hashable {
-    let id = UUID()
-    let title: String
-    let description: String
-    let minutes: Int
-    let symbol: String
-    let audioFileName: String? // Optional audio file for guided meditation
-    let hasAudio: Bool
-    let tags: [String] // Use case tags for each meditation
+// Migration helper to convert old preset format to new domain format
+private func createDomainPreset(
+    title: String,
+    description: String,
+    minutes: Int,
+    symbol: String,
+    audioFileName: String?,
+    hasAudio: Bool,
+    tags: [String]
+) -> MeditationPreset {
+    // Map tags to appropriate category
+    let category: MeditationCategory
+    if tags.contains("Focus") || tags.contains("Study") || tags.contains("Work") {
+        category = .focus
+    } else if tags.contains("Stress Relief") || tags.contains("Anxiety Reduction") {
+        category = .stress
+    } else if tags.contains("Deep Relaxation") || tags.contains("Wind-Down") {
+        category = .relaxation
+    } else if tags.contains("Reset") || tags.contains("Refresh") {
+        category = .mindfulness
+    } else {
+        category = .mindfulness
+    }
+    
+    // Map duration to difficulty
+    let difficulty: DifficultyLevel
+    if minutes <= 5 {
+        difficulty = .beginner
+    } else if minutes <= 15 {
+        difficulty = .intermediate
+    } else {
+        difficulty = .advanced
+    }
+    
+    return MeditationPreset(
+        title: title,
+        description: description,
+        duration: TimeInterval(minutes * 60), // Convert minutes to seconds
+        category: category,
+        difficulty: difficulty
+    )
 }
 
 private let quickMeditations: [MeditationPreset] = [
-    .init(
+    createDomainPreset(
         title: "2-Minute Quick Reset",
         description: "Perfect for a quick mental refresh during busy days. Ideal for office breaks, before meetings, or when you need to reset your mind.",
         minutes: 2,
@@ -33,7 +67,7 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: true,
         tags: ["Reset", "Meeting", "Refresh"]
     ),
-    .init(
+    createDomainPreset(
         title: "5-Minute Focus Boost",
         description: "Enhance concentration and mental clarity. Great for students before studying, professionals before important tasks, or to sharpen their focus.",
         minutes: 5,
@@ -42,7 +76,7 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: true,
         tags: ["Focus", "Study", "Work"]
     ),
-    .init(
+    createDomainPreset(
         title: "10-Minute Guided Journey",
         description: "A guided meditation experience with audio narration. Perfect for beginners who want direction, or anyone seeking a deeper, more immersive meditation session.",
         minutes: 10,
@@ -51,7 +85,7 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: true,
         tags: ["Guided", "Calm", "Relaxation"]
     ),
-    .init(
+    createDomainPreset(
         title: "15-Minute Deep Calm",
         description: "Achieve deeper relaxation and inner peace. Ideal for evening wind-down, stress relief, or when you need extended time to quiet your mind and find tranquility.",
         minutes: 15,
@@ -60,7 +94,7 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: true,
         tags: ["Deep Relaxation", "Wind-Down"]
     ),
-    .init(
+    createDomainPreset(
         title: "20-Minute Stress Relief",
         description: "Comprehensive stress reduction and emotional balance. Perfect for high-stress days, anxiety relief, or when you need substantial time to process emotions and find equilibrium.",
         minutes: 20,
@@ -69,15 +103,7 @@ private let quickMeditations: [MeditationPreset] = [
         hasAudio: true,
         tags: ["Stress Relief", "Anxiety Reduction"]
     ),
-    // .init(
-    //     title: "30-Minute Inner Peace",
-    //     description: "Transformative meditation for profound inner transformation. Designed for experienced practitioners seeking deep spiritual connection, self-discovery, and lasting inner peace.",
-    //     minutes: 30,
-    //     symbol: "timer",
-    //     audioFileName: nil,
-    //     hasAudio: false,
-    //     tags: ["Spiritual Growth", "Self-Discovery", "Monk Mode"]
-    // ),
+    // Note: 30-minute meditation commented out as it would be advanced level
 ]
 
 // MARK: - View
@@ -170,6 +196,27 @@ private struct MeditationCard: View {
             Color(red: 0.45, green: 0.49, blue: 0.94)  // Blue tags (repeat)
         ]
     }
+    
+    // Convert duration to minutes for display
+    private var durationInMinutes: Int {
+        Int(preset.duration / 60)
+    }
+    
+    // Create tags based on category and difficulty
+    private var displayTags: [String] {
+        var tags: [String] = []
+        
+        // Add category tag
+        tags.append(preset.category.rawValue.capitalized)
+        
+        // Add difficulty tag
+        tags.append(preset.difficulty.rawValue.capitalized)
+        
+        // Add duration tag
+        tags.append("\(durationInMinutes) min")
+        
+        return tags
+    }
 
     var body: some View {
         ZStack {
@@ -196,9 +243,9 @@ private struct MeditationCard: View {
                     }
                     
                     // Tags
-                if !preset.tags.isEmpty {
+                if !displayTags.isEmpty {
                         HStack(spacing: 8) {
-                            ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
+                            ForEach(Array(displayTags.prefix(3).enumerated()), id: \.offset) { _, tag in
                                 Text(tag)
                                     .font(.custom("AnekGujarati-Medium", size: 10))
                                     .foregroundColor(.white)
@@ -226,7 +273,7 @@ private struct MeditationCard: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(preset.title). \(preset.description)")
-        .accessibilityHint("Tap to start \(preset.minutes) minute meditation session")
+        .accessibilityHint("Tap to start \(durationInMinutes) minute meditation session")
     }
 }
 
