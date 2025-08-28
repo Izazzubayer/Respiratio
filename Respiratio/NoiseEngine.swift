@@ -11,7 +11,7 @@ final class NoiseEngine: ObservableObject {
     // MARK: Published UI state
     @Published var isPlaying: Bool = false
     @Published var elapsed: TimeInterval = 0          // seconds since session start (for timed sessions)
-    @Published var selectedDuration: BNDuration = .infinite {
+    @Published var selectedDuration: BNDuration = .fiveMin {
         didSet { resetTimerForSelection() }
     }
     @Published var volume: Float = 0.7 {

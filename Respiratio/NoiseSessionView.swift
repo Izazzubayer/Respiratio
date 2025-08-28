@@ -19,10 +19,46 @@ struct NoiseSessionView: View {
             Color(hex: "#1A2B7C")
                 .ignoresSafeArea()
             
-            ScrollView {
-                VStack(spacing: 32) {
-                    // Enhanced Header section - left aligned
-                    headerSection
+            VStack(spacing: 0) {
+                // Custom Back Button - positioned at the top
+                HStack {
+                    Button(action: {
+                        // Add haptic feedback
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        #endif
+                        dismiss()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Back to Noise")
+                                .font(.custom("AnekGujarati-Medium", size: 16))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.15))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .accessibilityLabel("Back to noise selection")
+                    .accessibilityHint("Returns to the main noise menu")
+                    .padding(.leading, 16)
+                    .padding(.top, 16)
+                    
+                    Spacer()
+                }
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        // Enhanced Header section - left aligned
+                        headerSection
                     
                     // Enhanced Progress Ring
                     progressSection
@@ -39,6 +75,7 @@ struct NoiseSessionView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
+        }
         }
         .navigationBarHidden(true)
         .onAppear { 
@@ -96,34 +133,17 @@ struct NoiseSessionView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Real-time progress bar
             VStack(spacing: 12) {
-                // Progress bar container
+                // Progress bar container - Apple Media Player style
                 ZStack(alignment: .leading) {
                     // Background track
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(height: 8)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.15))
+                        .frame(height: 4)
                     
                     // Progress fill
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    tintColor(for: noise),
-                                    tintColor(for: noise).opacity(0.7)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: max(0, min(1, engine.progress)) * (UIScreen.main.bounds.width - 64), height: 8)
-                        .animation(.easeInOut(duration: 0.1), value: engine.progress)
-                    
-                    // Progress indicator dot
-                    Circle()
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(tintColor(for: noise))
-                        .frame(width: 16, height: 16)
-                        .shadow(color: tintColor(for: noise).opacity(0.5), radius: 4, x: 0, y: 2)
-                        .offset(x: max(0, min(1, engine.progress)) * (UIScreen.main.bounds.width - 64) - 8)
+                        .frame(width: max(0, min(1, engine.progress)) * (UIScreen.main.bounds.width - 64), height: 4)
                         .animation(.easeInOut(duration: 0.1), value: engine.progress)
                 }
                 .frame(maxWidth: .infinity)
