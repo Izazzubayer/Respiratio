@@ -189,7 +189,9 @@ struct MeditationSessionView: View {
             // This will refresh the audio output display
         }
         .sheet(isPresented: $showCustom) { 
-            customDurationSheet 
+            customDurationSheet
+                .presentationBackground(Color(hex: "#1A2B7C"))
+                .presentationCornerRadius(24)
         }
         .sheet(isPresented: $showCompletionSheet, onDismiss: {
             dismiss()
@@ -197,6 +199,8 @@ struct MeditationSessionView: View {
             MeditationCompletionSheet(streak: streak, preset: preset, sessionDuration: sessionDuration)
                 .presentationDetents([.fraction(0.45), .medium])
                 .presentationDragIndicator(.visible)
+                .presentationBackground(Color(hex: "#1A2B7C"))
+                .presentationCornerRadius(24)
         }
     }
 
@@ -990,19 +994,19 @@ private struct MeditationCompletionSheet: View {
     @Environment(\.dismiss) private var dismissSheet
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             // Header row with Share on the right
-            HStack(spacing: 12) {
-                HStack(spacing: 12) {
+            HStack(spacing: 8) {
+                HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 32))
+                        .font(.system(size: 24))
                         .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Great job!")
-                            .font(.custom("Amagro-Bold", size: 24))
+                            .font(.custom("Amagro-Bold", size: 20))
                             .foregroundColor(.white)
                         Text("Meditation complete")
-                            .font(.custom("AnekGujarati-Regular", size: 16))
+                            .font(.custom("AnekGujarati-Regular", size: 14))
                             .foregroundColor(.white.opacity(0.8))
                     }
                 }
@@ -1011,16 +1015,16 @@ private struct MeditationCompletionSheet: View {
                           preview: SharePreview("Meditation Session Streak",
                                                 image: Image(systemName: "flame.fill"))) {
                     Label("Share", systemImage: "square.and.arrow.up")
-                        .font(.custom("AnekGujarati-Medium", size: 16))
+                        .font(.custom("AnekGujarati-Medium", size: 14))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 10)
                                 .fill(Color.white.opacity(0.15))
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                         )
                 }
@@ -1028,38 +1032,39 @@ private struct MeditationCompletionSheet: View {
             }
 
             // Session info card
-            VStack(spacing: 16) {
-                HStack(spacing: 12) {
+            VStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Image(systemName: "brain.head.profile")
-                        .font(.system(size: 20))
+                        .font(.system(size: 18))
                         .foregroundStyle(Color(red: 0.56, green: 0.59, blue: 0.99))
                     Text("\(preset.title) Session")
-                        .font(.custom("Amagro-Bold", size: 18))
+                        .font(.custom("Amagro-Bold", size: 16))
                         .foregroundColor(.white)
+                        .lineLimit(2)
                     Spacer()
                 }
                 
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Image(systemName: "clock.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundStyle(.blue)
                     Text("Duration: \(formatDuration(sessionDuration))")
-                        .font(.custom("AnekGujarati-Regular", size: 16))
+                        .font(.custom("AnekGujarati-Regular", size: 14))
                         .foregroundColor(.white.opacity(0.8))
                     Spacer()
                 }
             }
-            .padding(20)
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.08))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
             )
 
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 statCard(title: "Current Streak",
                          value: dayString(streak.streak),
                          symbol: "flame.fill", tint: .orange)
@@ -1070,7 +1075,7 @@ private struct MeditationCompletionSheet: View {
 
             if let last = streak.lastCompletionDate {
                 Text("Last session: \(formatted(last))")
-                    .font(.custom("AnekGujarati-Regular", size: 14))
+                    .font(.custom("AnekGujarati-Regular", size: 12))
                     .foregroundColor(.white.opacity(0.6))
             }
 
@@ -1079,13 +1084,13 @@ private struct MeditationCompletionSheet: View {
                 dismissSheet()
             } label: {
                 Text("Done")
-                    .font(.custom("AnekGujarati-Bold", size: 17))
+                    .font(.custom("AnekGujarati-Bold", size: 16))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 44)
             }
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             colors: [Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.8), Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.6)],
@@ -1095,14 +1100,17 @@ private struct MeditationCompletionSheet: View {
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.9), lineWidth: 1.5)
             )
-            .shadow(color: Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.3), radius: 6, x: 0, y: 3)
             .hapticsOnTap(.success)
         }
-        .padding(24)
-        .background(Color(hex: "#1A2B7C"))
+        .padding(20)
+        .background(
+            Color(hex: "#1A2B7C")
+                .ignoresSafeArea()
+        )
     }
 
     private var shareText: String {
@@ -1110,27 +1118,27 @@ private struct MeditationCompletionSheet: View {
     }
 
     private func statCard(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
                 Image(systemName: symbol)
-                    .font(.system(size: 16))
+                    .font(.system(size: 14))
                 Text(title)
-                    .font(.custom("AnekGujarati-Medium", size: 14))
+                    .font(.custom("AnekGujarati-Medium", size: 12))
                     .foregroundColor(.white.opacity(0.7))
                 Spacer()
             }
             .foregroundStyle(tint)
             Text(value)
-                .font(.custom("Amagro-Bold", size: 20))
+                .font(.custom("Amagro-Bold", size: 18))
                 .foregroundColor(.white)
         }
-        .padding(16)
+        .padding(12)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 14)
                 .fill(Color.white.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18)
+                    RoundedRectangle(cornerRadius: 14)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
         )
