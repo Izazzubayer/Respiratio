@@ -21,7 +21,7 @@ struct NoiseSessionView: View {
             
             ScrollView {
                 VStack(spacing: 32) {
-                    // Enhanced Header section
+                    // Enhanced Header section - left aligned
                     headerSection
                     
                     // Enhanced Progress Ring
@@ -40,8 +40,7 @@ struct NoiseSessionView: View {
                 .padding(.bottom, 40)
             }
         }
-        .navigationTitle(noise.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true)
         .onAppear { 
             engine.load(noise: noise)
         }
@@ -73,17 +72,13 @@ struct NoiseSessionView: View {
         }
     }
     
-    // MARK: - Enhanced Header Section
+    // MARK: - Enhanced Header Section - Left Aligned
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(noise.title)
-                    .font(.custom("Amagro-Bold", size: 32))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                
-                Spacer()
-            }
+            Text(noise.title)
+                .font(.custom("Amagro-Bold", size: 32))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
             
             if !noise.summary.isEmpty {
                 Text(noise.summary)
@@ -93,12 +88,12 @@ struct NoiseSessionView: View {
                     .lineSpacing(2)
             }
         }
-        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Enhanced Progress Section
+    // MARK: - Enhanced Progress Section - Left Aligned
     private var progressSection: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
             ZStack {
                 // Enhanced progress ring background
                 Circle()
@@ -123,19 +118,22 @@ struct NoiseSessionView: View {
                 }
             }
             
-            // Status text
+            // Status text - left aligned
             Text(engine.isPlaying ? "Now Playing" : "Ready to Play")
                 .font(.custom("AnekGujarati-Medium", size: 16))
                 .foregroundColor(.white.opacity(0.8))
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Enhanced Sleep Timer Section
+    // MARK: - Enhanced Sleep Timer Section - Left Aligned
     private var sleepTimerSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Sleep Timer")
                 .font(.custom("Amagro-Bold", size: 22))
                 .foregroundColor(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -220,96 +218,117 @@ struct NoiseSessionView: View {
                 .accessibilityLabel("Set custom duration")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel("Sleep Timer")
     }
     
-    // MARK: - Enhanced Transport Section
+    // MARK: - Enhanced Transport Section - Redesigned Buttons
     private var transportSection: some View {
-        HStack(spacing: 32) {
-            Spacer()
-            
-            // Enhanced Stop button
-            Button(role: .destructive) {
-                sessionDuration = engine.elapsed
-                engine.stop()
-                showCompletionAlert = true
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            } label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.red.opacity(0.3), Color.red.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 28)
-                                .stroke(Color.red.opacity(0.4), lineWidth: 1.5)
-                        )
-                    
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 36, weight: .medium))
-                        .foregroundColor(.white)
-                }
-            }
-            .frame(width: 104, height: 104)
-            .accessibilityLabel("Stop audio")
-            .accessibilityHint("Ends the current session")
-            
-            // Enhanced Play/Pause button
+        VStack(spacing: 24) {
+            // Main play/pause button - redesigned
             Button {
                 engine.isPlaying ? engine.pause() : engine.play()
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
                 ZStack {
-                    // Outer ring with enhanced glow
+                    // Outer glow ring
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [tintColor(for: noise).opacity(0.4), tintColor(for: noise).opacity(0.2)],
+                                colors: [tintColor(for: noise).opacity(0.3), Color.clear],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .overlay(
-                            Circle()
-                                .stroke(tintColor(for: noise).opacity(0.6), lineWidth: 2.5)
-                        )
-                        .shadow(color: tintColor(for: noise).opacity(0.3), radius: 12, x: 0, y: 6)
+                        .frame(width: 140, height: 140)
                     
-                    // Inner circle with icon
+                    // Main button background
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.25), Color.white.opacity(0.1)],
+                                colors: [tintColor(for: noise), tintColor(for: noise).opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 80, height: 80)
+                        .frame(width: 120, height: 120)
+                        .shadow(color: tintColor(for: noise).opacity(0.4), radius: 20, x: 0, y: 10)
                     
                     // Play/Pause icon
                     if engine.isPlaying {
                         Image(systemName: "pause.fill")
-                            .font(.system(size: 32, weight: .medium))
+                            .font(.system(size: 40, weight: .medium))
                             .foregroundColor(.white)
                     } else {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 32, weight: .medium))
+                            .font(.system(size: 40, weight: .medium))
                             .foregroundColor(.white)
-                            .offset(x: 2) // Slight offset for visual balance
+                            .offset(x: 2)
                     }
                 }
             }
-            .frame(width: 120, height: 120)
+            .frame(width: 140, height: 140)
             .accessibilityLabel(engine.isPlaying ? "Pause audio" : "Play audio")
             .accessibilityHint(engine.isPlaying ? "Pauses the current audio" : "Starts playing the audio")
             
-            Spacer()
+            // Control buttons row
+            HStack(spacing: 40) {
+                // Stop button - redesigned
+                Button(role: .destructive) {
+                    sessionDuration = engine.elapsed
+                    engine.stop()
+                    showCompletionAlert = true
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                } label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.red.opacity(0.3), radius: 10, x: 0, y: 5)
+                        
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(width: 80, height: 80)
+                .accessibilityLabel("Stop audio")
+                .accessibilityHint("Ends the current session")
+                
+                // Skip forward button
+                Button {
+                    // Add skip forward functionality if needed
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                        
+                        Image(systemName: "forward.fill")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(width: 80, height: 80)
+                .accessibilityLabel("Skip forward")
+            }
         }
-        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
     
     // MARK: - Enhanced Custom Duration Sheet
