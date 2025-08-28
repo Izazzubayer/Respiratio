@@ -11,13 +11,43 @@ import AVFoundation
 
 @main
 struct RespiratioApp: App {
+    @StateObject private var audioEngine = MeditationAudioEngine.shared
+    
     init() {
         configureAudioSession()
+        setupAppStateHandling()
     }
 
     var body: some Scene {
         WindowGroup { 
             AppRootView()
+        }
+    }
+    
+    private func setupAppStateHandling() {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            audioEngine.handleAppDidEnterBackground()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            audioEngine.handleAppWillEnterForeground()
+        }
+        
+        // Handle audio interruptions (phone calls, etc.)
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            audioEngine.handleAudioInterruption(notification: notification)
         }
     }
 }

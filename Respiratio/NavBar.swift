@@ -50,7 +50,7 @@ struct NavBar: View {
                 .frame(width: tabWidth, height: 82)
                 .offset(x: selectedTabOffset, y: -9.5)
                 .animation(
-                    .timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.3),
+                    .easeInOut(duration: 0.3),  // Changed from timingCurve to easeInOut
                     value: selectedTab
                 )
             
@@ -98,7 +98,7 @@ private struct NavBarItem: View {
                     .foregroundColor(.white)
                     .opacity(isSelected ? 1.0 : 0.6)
                     .scaleEffect(isSelected ? 1.1 : 1.0)
-                    .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
+                    .animation(.easeInOut(duration: 0.3), value: isSelected)
                 
                 // Label with smooth opacity transition and weight change
                 Text(tab.rawValue)
@@ -108,7 +108,7 @@ private struct NavBarItem: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8) // Prevent text truncation
                     .fixedSize(horizontal: false, vertical: true) // Ensure text fits
-                    .animation(.timingCurve(0.25, 0.1, 0.25, 1.0, duration: 0.4), value: isSelected)
+                    .animation(.easeInOut(duration: 0.3), value: isSelected)
             }
             .padding(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
             .frame(width: 122)

@@ -61,10 +61,12 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
     private func configureAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .mixWithOthers])
+            
+            // Use .playback category for background audio support and control center
+            try session.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             try session.setActive(true)
             
-            // Optimize for spoken audio content
+            // Optimize for meditation audio content
             try session.setPreferredSampleRate(44100)
             try session.setPreferredIOBufferDuration(0.005)
             
@@ -98,6 +100,9 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
             
             setupRemoteCommands()
             setupNowPlaying()
+            
+            // Enable background audio
+            UIApplication.shared.beginReceivingRemoteControlEvents()
             
         } catch {
             print("Failed to load meditation audio:", error)
@@ -146,6 +151,9 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
         // Clear Now Playing
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         
+        // Disable background audio
+        UIApplication.shared.endReceivingRemoteControlEvents()
+        
         // Haptic feedback
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         
@@ -180,6 +188,7 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
         stopUpdateTimer()
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.updateCurrentTime()
+            self?.updateNowPlaying() // Update Now Playing info in real-time
         }
     }
     
@@ -341,6 +350,43 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
         stopUpdateTimer()
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         UIApplication.shared.isIdleTimerDisabled = false
+        UIApplication.shared.endReceivingRemoteControlEvents()
+    }
+    
+    // MARK: - App State Handling
+    func handleAppDidEnterBackground() {
+        // Ensure audio session stays active in background
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
+    
+    func handleAppWillEnterForeground() {
+        // Refresh audio session when returning to foreground
+        configureAudioSession()
+    }
+    
+    func handleAudioInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+        
+        switch type {
+        case .began:
+            // Audio interruption began (e.g., phone call)
+            if isPlaying {
+                pause()
+            }
+        case .ended:
+            // Audio interruption ended
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) && isPlaying {
+                play()
+            }
+        @unknown default:
+            break
+        }
     }
 }
 
