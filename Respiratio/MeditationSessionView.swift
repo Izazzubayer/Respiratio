@@ -72,7 +72,9 @@ struct MeditationSessionView: View {
     @StateObject private var streak = StreakStore()
     @Environment(\.dismiss) private var dismiss
     
-
+    private let presets: [Int] = [5, 15, 30, 60, 120]
+    @State private var showCustom = false
+    @State private var customMinutes = 20
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
 
@@ -139,8 +141,14 @@ struct MeditationSessionView: View {
                 
                 ScrollView {
                     VStack(spacing: 32) {
+                        // Enhanced Header section - left aligned
+                        headerSection
+                    
                         // Enhanced Progress Ring
                         progressSection
+                    
+                        // Enhanced Duration Timer chips
+                        // durationSection
                     
                         // Enhanced Transport Section
                         transportSection
@@ -154,7 +162,9 @@ struct MeditationSessionView: View {
             }
         }
         .navigationBarHidden(true)
-
+        .onAppear {
+            setupSession()
+        }
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
             sessionDuration = TimeInterval(model.total - model.remaining)
@@ -163,7 +173,21 @@ struct MeditationSessionView: View {
                 showCompletionSheet = true
             }
         }
-
+        .onReceive(NotificationCenter.default.publisher(for: .meditationCompleted)) { _ in
+            if preset.hasAudio {
+                audioEngine.stop()
+            } else {
+            model.stop()
+            }
+            sessionDuration = preset.hasAudio ? audioEngine.duration : TimeInterval(model.total)
+            _ = streak.registerCompletion()
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                showCompletionSheet = true
+            }
+        }
+        .sheet(isPresented: $showCustom) { 
+            customDurationSheet 
+        }
         .sheet(isPresented: $showCompletionSheet, onDismiss: {
             dismiss()
         }) {
@@ -177,10 +201,27 @@ struct MeditationSessionView: View {
     
     private func tintColor(for preset: MeditationPreset) -> Color {
         // Use a consistent meditation color
-        return Color(red: 0.56, green: 0.59, blue: 0.99)
+        return Color(red: 0.29, green: 0.56, blue: 0.89)
     }
     
-
+    // MARK: - Enhanced Header Section - Left Aligned
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(preset.title)
+                .font(.custom("Amagro-Bold", size: 24))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+            
+            if !preset.description.isEmpty {
+                Text(preset.description)
+                    .font(.custom("AnekGujarati-Regular", size: 17))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.leading)
+                    .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
     
     // MARK: - Enhanced Progress Section - Left Aligned
     private var progressSection: some View {
@@ -203,10 +244,23 @@ struct MeditationSessionView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 16)
                 
-                // Progress text and time
+                                // Progress text and time
         HStack {
-                    if model.total > 0 {
-                        // Current time / Total time
+                if preset.hasAudio {
+                        // Audio-guided meditation time display
+                        Text(formatTime(audioEngine.currentTime))
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("/")
+                            .font(.custom("AnekGujarati-Regular", size: 16))
+                            .foregroundColor(.white.opacity(0.5))
+                        
+                        Text(formatTime(audioEngine.duration))
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                    } else if model.total > 0 {
+                        // Timer-based meditation time display
                         Text(timeString(model.total - model.remaining))
                             .font(.custom("AnekGujarati-Bold", size: 16))
                             .foregroundColor(.white.opacity(0.7))
@@ -341,10 +395,20 @@ struct MeditationSessionView: View {
         VStack(spacing: 24) {
             // Main play/pause button - redesigned
             Button {
-                if model.isRunning {
-                    model.pause()
+                if preset.hasAudio {
+                    // Handle audio-guided meditation
+                    if audioEngine.isPlaying {
+                        audioEngine.pause()
+                    } else {
+                        audioEngine.play()
+                    }
                 } else {
-                    model.start()
+                    // Handle timer-based meditation
+                    if model.isRunning {
+                        model.pause()
+                    } else {
+                        model.start()
+                    }
                 }
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             } label: {
@@ -373,46 +437,175 @@ struct MeditationSessionView: View {
                         .shadow(color: tintColor(for: preset).opacity(0.4), radius: 20, x: 0, y: 10)
                     
                     // Play/Pause icon
-                    if model.isRunning {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 40, weight: .medium))
-                            .foregroundColor(.white)
+                    if preset.hasAudio {
+                        if audioEngine.isPlaying {
+                            Image(systemName: "pause.fill")
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundColor(.white)
+                        } else {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundColor(.white)
+                                .offset(x: 2)
+                        }
                     } else {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 40, weight: .medium))
-                            .foregroundColor(.white)
-                            .offset(x: 2)
+                        if model.isRunning {
+                            Image(systemName: "pause.fill")
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundColor(.white)
+                        } else {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundColor(.white)
+                                .offset(x: 2)
+                        }
                     }
                 }
             }
             .frame(width: 140, height: 140)
-            .accessibilityLabel(model.isRunning ? "Pause meditation" : "Start meditation")
-            .accessibilityHint(model.isRunning ? "Pauses the current meditation" : "Starts the meditation session")
+            .accessibilityLabel(
+                preset.hasAudio 
+                    ? (audioEngine.isPlaying ? "Pause guided meditation" : "Start guided meditation")
+                    : (model.isRunning ? "Pause meditation" : "Start meditation")
+            )
+            .accessibilityHint(
+                preset.hasAudio
+                    ? (audioEngine.isPlaying ? "Pauses the guided meditation audio" : "Starts the guided meditation audio")
+                    : (model.isRunning ? "Pauses the current meditation" : "Starts the meditation session")
+            )
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
     
-
+    // MARK: - Enhanced Custom Duration Sheet
+    private var customDurationSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color(hex: "#1A2B7C")
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 36) {
+                    Text("Set Custom Duration")
+                        .font(.custom("Amagro-Bold", size: 24))
+                        .foregroundColor(.white)
+                    
+                    VStack(spacing: 20) {
+                        Text("Select minutes")
+                            .font(.custom("AnekGujarati-Regular", size: 17))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Picker("Minutes", selection: $customMinutes) {
+                            ForEach(1...180, id: \.self) { minutes in
+                                Text("\(minutes) min")
+                                    .font(.custom("AnekGujarati-Regular", size: 17))
+                                    .foregroundColor(.white)
+                                    .tag(minutes)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+                    }
+                    
+                    HStack(spacing: 24) {
+                        // Enhanced Cancel button
+                        Button("Cancel") {
+                            showCustom = false
+                        }
+                        .font(.custom("AnekGujarati-Medium", size: 17))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                        
+                        // Enhanced Set Duration button
+                        Button("Set Duration") {
+                            showCustom = false
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .font(.custom("AnekGujarati-Bold", size: 17))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [tintColor(for: preset).opacity(0.8), tintColor(for: preset).opacity(0.6)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(tintColor(for: preset).opacity(0.9), lineWidth: 1.5)
+                                )
+                        )
+                        .shadow(color: tintColor(for: preset).opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 36)
+            }
+            .presentationDetents([.medium])
+        }
+    }
 
     // MARK: - Subviews
 
     // MARK: - Computed Properties
     
     private var currentProgress: Double {
+        if preset.hasAudio {
+            return audioEngine.progress
+        } else {
             return model.finished ? 1 : model.progress
+        }
     }
     
     private var currentStatusText: String {
+        if preset.hasAudio {
+            if audioEngine.isPlaying {
+                return "Guided meditation"
+            } else if audioEngine.currentTime > 0 {
+                return "Paused"
+            } else {
+                return "Ready to begin"
+            }
+        } else {
             return model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused")
+        }
     }
 
-
+    // MARK: - Session Management
+    
+    private func setupSession() {
+        // Setup audio if this is a guided meditation
+        if preset.hasAudio, let audioFileName = preset.audioFileName {
+            audioEngine.loadMeditation(fileName: audioFileName, title: preset.title)
+        }
+        
+        // Don't auto-start the meditation session
+        // model.start()
+    }
 
     // MARK: - Utils
 
     private func timeString(_ s: Int) -> String {
         let m = s / 60, ss = s % 60
         return String(format: "%02d:%02d", m, ss)
+    }
+    
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }
 
