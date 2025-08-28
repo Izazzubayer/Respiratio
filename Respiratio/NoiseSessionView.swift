@@ -156,17 +156,24 @@ struct NoiseSessionView: View {
         let baseHeight: CGFloat = 20
         let maxHeight: CGFloat = 60
         
-        // Create a wave-like pattern
-        let waveOffset = sin(Double(index) * 0.3) * 0.3
-        let progressMultiplier = progress + waveOffset
+        // Calculate how much of the progress bar this index represents
+        let barProgress = Double(index) / 31.0 // 0 to 1 across 32 bars (0-31)
         
-        // Add some randomness for natural look
-        let randomFactor = sin(Double(index) * 0.7) * 0.2
+        // Only show bars up to the current progress
+        if barProgress > progress {
+            return baseHeight
+        }
         
-        let height = baseHeight + (maxHeight - baseHeight) * progressMultiplier * (1 + randomFactor)
+        // Create a wave-like pattern that's more pronounced for active bars
+        let waveOffset = sin(Double(index) * 0.4) * 0.4
+        let progressIntensity = 1.0 - (barProgress / progress) // Higher intensity for earlier bars
         
-        // Ensure minimum height
-        return max(baseHeight, min(maxHeight, height))
+        // Calculate height based on progress and wave pattern
+        let progressHeight = baseHeight + (maxHeight - baseHeight) * progressIntensity
+        let waveHeight = progressHeight * (1.0 + waveOffset)
+        
+        // Ensure height is within bounds
+        return max(baseHeight, min(maxHeight, waveHeight))
     }
     
     // MARK: - Enhanced Sleep Timer Section - Left Aligned
