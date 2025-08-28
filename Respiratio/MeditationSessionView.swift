@@ -72,9 +72,8 @@ struct MeditationSessionView: View {
     @StateObject private var streak = StreakStore()
     @Environment(\.dismiss) private var dismiss
     
-    private let presets: [Int] = [5, 15, 30, 60, 120]
-    @State private var showCustom = false
-    @State private var customMinutes = 20
+
+
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
     
@@ -147,8 +146,7 @@ struct MeditationSessionView: View {
                         // Enhanced Progress Ring
                         progressSection
                     
-                        // Enhanced Duration Timer chips
-                        durationSection
+
                     
                         // Enhanced Transport Section
                         transportSection
@@ -163,7 +161,7 @@ struct MeditationSessionView: View {
         }
         .navigationBarHidden(true)
         .onAppear { 
-            setupSession()
+            // Don't auto-start meditation
         }
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
@@ -173,9 +171,7 @@ struct MeditationSessionView: View {
                 showCompletionSheet = true
             }
         }
-        .sheet(isPresented: $showCustom) { 
-            customDurationSheet 
-        }
+
         .sheet(isPresented: $showCompletionSheet, onDismiss: {
             dismiss()
         }) {
@@ -421,85 +417,7 @@ struct MeditationSessionView: View {
         .frame(maxWidth: .infinity, alignment: .center)
     }
     
-    // MARK: - Enhanced Custom Duration Sheet
-    private var customDurationSheet: some View {
-        NavigationStack {
-            ZStack {
-                Color(hex: "#1A2B7C")
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 36) {
-                    Text("Set Custom Duration")
-                        .font(.custom("Amagro-Bold", size: 24))
-                        .foregroundColor(.white)
-                    
-                    VStack(spacing: 20) {
-                        Text("Select minutes")
-                            .font(.custom("AnekGujarati-Regular", size: 17))
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Picker("Minutes", selection: $customMinutes) {
-                            ForEach(1...180, id: \.self) { minutes in
-                                Text("\(minutes) min")
-                                    .font(.custom("AnekGujarati-Regular", size: 17))
-                                    .foregroundColor(.white)
-                                    .tag(minutes)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(height: 200)
-                    }
-                    
-                    HStack(spacing: 24) {
-                        // Enhanced Cancel button
-                        Button("Cancel") {
-                            showCustom = false
-                        }
-                        .font(.custom("AnekGujarati-Medium", size: 17))
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(Color.white.opacity(0.08))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                        
-                        // Enhanced Set Duration button
-                        Button("Set Duration") {
-                            showCustom = false
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        }
-                        .font(.custom("AnekGujarati-Bold", size: 17))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [tintColor(for: preset).opacity(0.8), tintColor(for: preset).opacity(0.6)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(tintColor(for: preset).opacity(0.9), lineWidth: 1.5)
-                                )
-                        )
-                        .shadow(color: tintColor(for: preset).opacity(0.3), radius: 8, x: 0, y: 4)
-                    }
-                }
-                .padding(.horizontal, 28)
-                .padding(.vertical, 36)
-            }
-            .presentationDetents([.medium])
-        }
-    }
+
 
     // MARK: - Subviews
 
@@ -513,12 +431,7 @@ struct MeditationSessionView: View {
         return model.isRunning ? "In progress" : (model.finished ? "Completed" : "Paused")
     }
 
-    // MARK: - Session Management
-    
-    private func setupSession() {
-        // Start the meditation session
-        model.start()
-    }
+
 
     // MARK: - Utils
 
