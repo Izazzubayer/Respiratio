@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		826D986F2E58E75200E4461A /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D986E2E58E75200E4461A /* WidgetKit.framework */; };
 		826D98712E58E75200E4461A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 826D98702E58E75200E4461A /* SwiftUI.framework */; };
-		A7B78C8A2E5CAF38006A567F /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = A7B78C892E5CAF38006A567F /* DotLottie */; };
+		82A9A9EF2E600A0800ACE425 /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = 82A9A9EE2E600A0800ACE425 /* DotLottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,7 +106,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A7B78C8A2E5CAF38006A567F /* DotLottie in Frameworks */,
+				82A9A9EF2E600A0800ACE425 /* DotLottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,7 +201,7 @@
 			);
 			name = Respiratio;
 			packageProductDependencies = (
-				A7B78C892E5CAF38006A567F /* DotLottie */,
+				82A9A9EE2E600A0800ACE425 /* DotLottie */,
 			);
 			productName = Respiratio;
 			productReference = 82B0FE5E2E56350900EF7760 /* Respiratio.app */;
@@ -289,7 +289,7 @@
 			mainGroup = 82B0FE552E56350900EF7760;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
+				82A9A9ED2E6009FC00ACE425 /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 82B0FE5F2E56350900EF7760 /* Products */;
@@ -778,7 +778,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
+		82A9A9ED2E6009FC00ACE425 /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/LottieFiles/dotlottie-ios";
 			requirement = {
@@ -789,9 +789,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A7B78C892E5CAF38006A567F /* DotLottie */ = {
+		82A9A9EE2E600A0800ACE425 /* DotLottie */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A7B78C882E5CABD5006A567F /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
+			package = 82A9A9ED2E6009FC00ACE425 /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
 			productName = DotLottie;
 		};
 /* End XCSwiftPackageProductDependency section */

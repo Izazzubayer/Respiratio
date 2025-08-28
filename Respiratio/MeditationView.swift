@@ -110,7 +110,7 @@ struct MeditationView: View {
                     ScrollView {
                         LazyVStack(spacing: 24) {
                             ForEach(Array(quickMeditations.enumerated()), id: \.element.id) { index, preset in
-                                NavigationLink {
+                        NavigationLink {
                                     // Create specific meditation session views for each type
                                     switch index {
                                     case 0:
@@ -124,9 +124,9 @@ struct MeditationView: View {
                                     case 4:
                                         StressReliefMeditationView(preset: preset)
                                     default:
-                                        MeditationSessionView(preset: preset)
+                            MeditationSessionView(preset: preset)
                                     }
-                                } label: {
+                        } label: {
                                     MeditationCard(preset: preset, colorIndex: index)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -191,11 +191,11 @@ private struct MeditationCard: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(cardColors[colorIndex % cardColors.count])
             
-            HStack(spacing: 16) {
+        HStack(spacing: 16) {
                 // Content side
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(preset.title)
+                    Text(preset.title)
                             .font(.custom("AnekGujarati-Bold", size: 20))
                             .foregroundColor(.white)
                             .lineLimit(nil)
@@ -210,7 +210,7 @@ private struct MeditationCard: View {
                     }
                     
                     // Tags
-                    if !preset.tags.isEmpty {
+                if !preset.tags.isEmpty {
                         HStack(spacing: 8) {
                             ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
                                 Text(tag)

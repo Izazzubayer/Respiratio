@@ -1,5 +1,12 @@
+//
+//  LottieDemoView.swift
+//  Respiratio
+//
+//  Demo view for testing Lottie animations
+//
+
 import SwiftUI
-import DotLottie
+// import DotLottie  // Temporarily commented out until package is properly linked
 
 struct LottieDemoView: View {
     @State private var isPlaying = false

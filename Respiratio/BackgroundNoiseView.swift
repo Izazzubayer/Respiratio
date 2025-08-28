@@ -68,24 +68,24 @@ struct BackgroundNoiseView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Fixed Header section
-                    VStack(alignment: .leading, spacing: 4) {
+                    // Enhanced Header section
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("BACKGROUND NOISE")
-                            .font(.custom("Amagro-Bold", size: 24))
+                            .font(.custom("Amagro-Bold", size: 28))
                             .foregroundColor(.white)
                         
                         Text("Choose your ambient soundscape")
                             .font(.custom("AnekGujarati-Regular", size: 18))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(.white.opacity(0.7))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 24)
+                    .padding(.top, 20)
+                    .padding(.bottom, 32)
                     
                     // Scrollable Noise cards
                     ScrollView {
-                        LazyVStack(spacing: 24) {
+                        LazyVStack(spacing: 20) {
                             ForEach(noisePresets) { preset in
                                 NavigationLink {
                                     NoiseSessionView(noise: preset.noise)
@@ -112,31 +112,48 @@ struct BackgroundNoiseView: View {
 private struct NoiseCard: View {
     let preset: NoisePreset
     
-    // Color scheme for each card - using consistent app colors
-    private var cardColors: [Color] {
-        [
-            Color(red: 0.56, green: 0.59, blue: 0.99), // Blue - White Noise
-            Color(red: 0.98, green: 0.43, blue: 0.35), // Orange - Brown Noise
-            Color(red: 0.25, green: 0.25, blue: 0.31), // Dark gray - Theta Wave
-            Color(red: 0.42, green: 0.70, blue: 0.56), // Green - Beta Wave
-        ]
+    // Enhanced color scheme for each card
+    private var cardGradient: LinearGradient {
+        switch preset.title {
+        case "White Noise":
+            return LinearGradient(
+                colors: [Color(hex: "#4A90E2"), Color(hex: "#357ABD")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case "Brown Noise":
+            return LinearGradient(
+                colors: [Color(hex: "#E67E22"), Color(hex: "#D35400")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case "Theta Wave":
+            return LinearGradient(
+                colors: [Color(hex: "#9B59B6"), Color(hex: "#8E44AD")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case "Beta Wave":
+            return LinearGradient(
+                colors: [Color(hex: "#F1C40F"), Color(hex: "#F39C12")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        default:
+            return LinearGradient(
+                colors: [Color(hex: "#4A90E2"), Color(hex: "#357ABD")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
     }
     
-    private var tagColors: [Color] {
-        [
-            Color(red: 0.45, green: 0.49, blue: 0.94), // Blue tags
-            Color(red: 0.84, green: 0.36, blue: 0.28), // Orange tags
-            Color(red: 0.19, green: 0.19, blue: 0.19), // Dark tags
-            Color(red: 0.34, green: 0.56, blue: 0.44), // Green tags
-        ]
-    }
-    
-    // SF Symbol for each noise type
+    // Enhanced SF Symbol for each noise type
     private var iconName: String {
         switch preset.title {
-        case "White Noise": return "waveform"
+        case "White Noise": return "waveform.path.ecg"
         case "Brown Noise": return "drop.fill"
-        case "Theta Wave": return "circle.grid.cross"
+        case "Theta Wave": return "circle.grid.cross.fill"
         case "Beta Wave": return "bolt.circle.fill"
         default: return "music.note"
         }
@@ -144,40 +161,49 @@ private struct NoiseCard: View {
 
     var body: some View {
         ZStack {
-            // Card background
-            RoundedRectangle(cornerRadius: 20)
-                .fill(cardColors[preset.colorIndex % cardColors.count])
+            // Enhanced card background with gradient and shadow
+            RoundedRectangle(cornerRadius: 24)
+                .fill(cardGradient)
+                .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
             
-            HStack(spacing: 16) {
+            HStack(spacing: 20) {
                 // Content side
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(preset.title)
-                            .font(.custom("AnekGujarati-Bold", size: 22))
+                            .font(.custom("Amagro-Bold", size: 24))
                             .foregroundColor(.white)
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                         
                         Text(preset.summary)
-                            .font(.custom("AnekGujarati-Regular", size: 14))
-                            .lineSpacing(1)
-                            .foregroundColor(.white)
+                            .font(.custom("AnekGujarati-Regular", size: 15))
+                            .lineSpacing(2)
+                            .foregroundColor(.white.opacity(0.9))
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     
-                    // Tags
+                    // Enhanced tags
                     if !preset.tags.isEmpty {
                         HStack(spacing: 8) {
                             ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
                                 Text(tag)
-                                    .font(.custom("AnekGujarati-Medium", size: 10))
+                                    .font(.custom("AnekGujarati-Medium", size: 11))
                                     .foregroundColor(.white)
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 14)
                                     .background(
                                         Capsule()
-                                            .fill(tagColors[preset.colorIndex % tagColors.count])
+                                            .fill(Color.white.opacity(0.25))
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
+                                            )
                                     )
                             }
                         }
@@ -185,14 +211,19 @@ private struct NoiseCard: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Icon side
-                Image(systemName: iconName)
-                    .font(.system(size: 48, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 80, height: 80)
+                // Enhanced icon side
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.15))
+                        .frame(width: 88, height: 88)
+                    
+                    Image(systemName: iconName)
+                        .font(.system(size: 40, weight: .medium))
+                        .foregroundColor(.white)
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 20)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

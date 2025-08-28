@@ -7,7 +7,7 @@
 
 import SwiftUI
 import CoreHaptics
-import DotLottie
+// import DotLottie  // Temporarily commented out until package is properly linked
 
 struct BoxBreathingView: View {
     @State private var isAnimating = false
@@ -16,7 +16,7 @@ struct BoxBreathingView: View {
     @State private var breathingPhase: BreathingPhase = .inhale
     @State private var phaseTimer: Timer?
     @State private var hapticEngine: CHHapticEngine?
-    @State private var breathingAnimation: DotLottieAnimation?
+    @State private var breathingAnimation: Any?  // Temporarily commented out DotLottieAnimation
     
     // Simple, reliable haptic system
     private let inhaleHaptic = UIImpactFeedbackGenerator(style: .light)
@@ -96,16 +96,16 @@ struct BoxBreathingView: View {
                          .frame(width: 280, height: 280)
                      
                      // Lottie Animation
-                     if let breathingAnimation = breathingAnimation {
-                         breathingAnimation
-                             .view()
-                             .frame(width: 280, height: 280)
-                     } else {
+                     // if let breathingAnimation = breathingAnimation {
+                     //     breathingAnimation
+                     //         .view()
+                     //         .frame(width: 280, height: 280)
+                     // } else {
                          // Fallback if Lottie fails to load
-                         Text("Lottie Animation")
+                         Text("Breathing Animation")
                              .foregroundColor(.white)
                              .frame(width: 280, height: 280)
-                     }
+                     // }
                      
                      // Phase Text in Center
                      VStack(spacing: 8) {
@@ -209,7 +209,7 @@ struct BoxBreathingView: View {
     
     private func setupLottieAnimation() {
         print("Setting up Lottie animation...")
-        breathingAnimation = DotLottieAnimation(fileName: "Box Breathing V6", config: AnimationConfig())
+        // breathingAnimation = DotLottieAnimation(fileName: "Box Breathing V6", config: AnimationConfig())  // Temporarily commented out
         if breathingAnimation != nil {
             print("Lottie animation loaded successfully!")
         } else {
