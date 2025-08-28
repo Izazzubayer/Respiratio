@@ -66,9 +66,15 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
             try session.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             try session.setActive(true)
             
+            // Enable background audio playback
+            try session.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
+            
             // Optimize for meditation audio content
             try session.setPreferredSampleRate(44100)
             try session.setPreferredIOBufferDuration(0.005)
+            
+            // Ensure audio session stays active
+            try session.setActive(true, options: [])
             
         } catch {
             print("Failed to configure audio session:", error)
@@ -115,6 +121,9 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
         
         configureAudioSession()
         sessionStartTime = Date()
+        
+        // Ensure audio session is active for background playback
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
         
         player.play()
         isPlaying = true
@@ -189,6 +198,11 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.updateCurrentTime()
             self?.updateNowPlaying() // Update Now Playing info in real-time
+            
+            // Ensure audio session stays active during playback
+            if self?.isPlaying == true {
+                try? AVAudioSession.sharedInstance().setActive(true, options: [])
+            }
         }
     }
     
@@ -356,12 +370,20 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
     // MARK: - App State Handling
     func handleAppDidEnterBackground() {
         // Ensure audio session stays active in background
-        try? AVAudioSession.sharedInstance().setActive(true)
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
+        
+        // Keep audio session active for background playback
+        if isPlaying {
+            try? AVAudioSession.sharedInstance().setActive(true, options: [])
+        }
     }
     
     func handleAppWillEnterForeground() {
         // Refresh audio session when returning to foreground
         configureAudioSession()
+        
+        // Ensure audio session is active
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
     }
     
     func handleAudioInterruption(notification: Notification) {
@@ -385,6 +407,25 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
                 play()
             }
         @unknown default:
+            break
+        }
+    }
+    
+    func handleAudioRouteChange(notification: Notification) {
+        // Handle audio route changes (headphones, speaker, etc.)
+        guard let userInfo = notification.userInfo,
+              let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+            return
+        }
+        
+        switch reason {
+        case .newDeviceAvailable, .oldDeviceUnavailable:
+            // Audio route changed, ensure session stays active
+            if isPlaying {
+                try? AVAudioSession.sharedInstance().setActive(true, options: [])
+            }
+        default:
             break
         }
     }

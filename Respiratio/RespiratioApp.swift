@@ -49,14 +49,23 @@ struct RespiratioApp: App {
         ) { notification in
             audioEngine.handleAudioInterruption(notification: notification)
         }
+        
+        // Handle audio route changes (headphones, speaker, etc.)
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            audioEngine.handleAudioRouteChange(notification: notification)
+        }
     }
 }
 
 private func configureAudioSession() {
     let session = AVAudioSession.sharedInstance()
     do {
-        // Playback that can mix with other audio (Music/Podcasts)
-        try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        // Configure for background audio playback
+        try session.setCategory(.playback, mode: .default, options: [])
         try session.setPreferredSampleRate(44_100)          // universal
         try session.setPreferredOutputNumberOfChannels(2)   // stereo
         try session.setPreferredIOBufferDuration(0.005)     // ~5 ms (safe for AVAudioPlayer)
