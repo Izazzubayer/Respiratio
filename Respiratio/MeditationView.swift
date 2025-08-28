@@ -232,22 +232,7 @@ private struct MeditationCard: View {
 
 
 
-private struct SectionHeader: View {
-    let title: String
-    let symbol: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: symbol)
-                .foregroundStyle(.secondary)
-            Text(title.uppercased())
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .textCase(nil)
-    }
-}
+// SectionHeader is now available from DesignSystem.Layout
 
 // MARK: - Preview
 

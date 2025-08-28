@@ -197,7 +197,7 @@ struct MeditationSessionView: View {
             dismiss()
         }) {
             MeditationCompletionSheet(streak: streak, preset: preset, sessionDuration: sessionDuration)
-                .presentationDetents([.fraction(0.45), .medium])
+                .presentationDetents([.fraction(0.5), .medium])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: "#1A2B7C"))
                 .presentationCornerRadius(24)
@@ -1091,19 +1091,13 @@ private struct MeditationCompletionSheet: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.8), Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color(red: 0.29, green: 0.56, blue: 0.89))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.9), lineWidth: 1.5)
+                    .stroke(Color(red: 0.29, green: 0.56, blue: 0.89).opacity(0.9), lineWidth: 1.5)
             )
-            .shadow(color: Color(red: 0.56, green: 0.59, blue: 0.99).opacity(0.3), radius: 6, x: 0, y: 3)
+            .shadow(color: Color(red: 0.29, green: 0.56, blue: 0.89).opacity(0.3), radius: 6, x: 0, y: 3)
             .hapticsOnTap(.success)
         }
         .padding(20)
