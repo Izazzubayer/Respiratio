@@ -79,6 +79,9 @@ struct MeditationSessionView: View {
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
     @State private var volume: Float = 0.8
+    
+    // MARK: - Notification Listener
+    @State private var exitNotificationObserver: NSObjectProtocol?
 
     init(preset: MeditationPreset) {
         self.preset = preset
@@ -99,6 +102,27 @@ struct MeditationSessionView: View {
             tags: ["Custom Duration", "Focus", "Relaxation"]
         )
         _model = .init(wrappedValue: MeditationSessionModel(duration: duration))
+    }
+    
+    // MARK: - Notification Methods
+    
+    private func setupExitNotificationListener() {
+        exitNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .exitToMainView,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let tab = notification.object as? NavTab, tab == .meditation {
+                dismiss()
+            }
+        }
+    }
+    
+    private func cleanupExitNotificationListener() {
+        if let observer = exitNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+            exitNotificationObserver = nil
+        }
     }
 
     var body: some View {
@@ -163,8 +187,21 @@ struct MeditationSessionView: View {
             }
         }
         .navigationBarHidden(true)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 100 && abs(value.translation.height) < 50 {
+                        // Swipe right with minimal vertical movement
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        #endif
+                        dismiss()
+                    }
+                }
+        )
         .onAppear {
             setupSession()
+            setupExitNotificationListener()
         }
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
@@ -185,6 +222,9 @@ struct MeditationSessionView: View {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
                 showCompletionSheet = true
             }
+        }
+        .onDisappear {
+            cleanupExitNotificationListener()
         }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
             // Force UI update when audio route changes

@@ -46,13 +46,6 @@
 			);
 			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
 		};
-		826D98892E58E9A400E4461A /* Exceptions for "Respiratio" folder in "NoiseLiveActivityExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				NoiseActivityAttributes.swift,
-			);
-			target = 826D986B2E58E75100E4461A /* NoiseLiveActivityExtension */;
-		};
 		826D988B2E58FD4300E4461A /* Exceptions for "Respiratio" folder in "Respiratio" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -75,7 +68,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				826D988B2E58FD4300E4461A /* Exceptions for "Respiratio" folder in "Respiratio" target */,
-				826D98892E58E9A400E4461A /* Exceptions for "Respiratio" folder in "NoiseLiveActivityExtension" target */,
 			);
 			path = Respiratio;
 			sourceTree = "<group>";

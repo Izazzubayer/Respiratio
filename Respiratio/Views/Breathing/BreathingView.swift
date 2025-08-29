@@ -171,7 +171,7 @@ private struct BreathingCard: View {
                     
                     // Subtitle as a tag
                     Text(preset.subtitle)
-                        .font(.custom("AnekGujarati-Medium", size: 10))
+                                                    .font(.custom("AnekGujarati-Medium", size: 12))
                         .foregroundColor(.white)
                         .padding(.vertical, 6)
                         .padding(.horizontal, 12)

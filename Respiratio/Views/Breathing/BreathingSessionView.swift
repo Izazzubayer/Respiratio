@@ -102,9 +102,33 @@ struct BreathingSessionView: View {
     @StateObject private var model: BreathingSessionModel
     @Environment(\.dismiss) private var dismiss
     @State private var showDone = false
+    
+    // MARK: - Notification Listener
+    @State private var exitNotificationObserver: NSObjectProtocol?
 
     init(exercise: BreathingExercise, totalSeconds: Int = 120) {
         _model = .init(wrappedValue: .init(exercise: exercise, totalSeconds: totalSeconds))
+    }
+    
+    // MARK: - Notification Methods
+    
+    private func setupExitNotificationListener() {
+        exitNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .exitToMainView,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let tab = notification.object as? NavTab, tab == .breathing {
+                dismiss()
+            }
+        }
+    }
+    
+    private func cleanupExitNotificationListener() {
+        if let observer = exitNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+            exitNotificationObserver = nil
+        }
     }
 
     var body: some View {
@@ -156,6 +180,18 @@ struct BreathingSessionView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 100 && abs(value.translation.height) < 50 {
+                        // Swipe right with minimal vertical movement
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        #endif
+                        dismiss()
+                    }
+                }
+        )
         // Remove custom back button to avoid duplicate back button
         /*
         .toolbar {
@@ -176,9 +212,11 @@ struct BreathingSessionView: View {
         .onAppear {
             // Do NOT auto-start; keep paused by default
             try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            setupExitNotificationListener()
         }
         .onDisappear {
             model.pause()
+            cleanupExitNotificationListener()
             #if os(iOS)
             UIApplication.shared.isIdleTimerDisabled = false
             #endif

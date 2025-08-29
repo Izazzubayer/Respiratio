@@ -117,16 +117,17 @@ final class AudioCacheManager: ObservableObject {
     }
     
     private func loadAndCacheAudio(fileName: String, fileExtension: String) -> AVAudioPlayer? {
-        guard let url = Bundle.main.url(forResource: fileName, withExtension: fileExtension) else {
+        // Look for audio file directly in main bundle
+        guard let audioUrl = Bundle.main.url(forResource: fileName, withExtension: fileExtension) else {
             print("Audio file not found: \(fileName).\(fileExtension)")
             return nil
         }
         
         do {
-            let player = try AVAudioPlayer(contentsOf: url)
+            let player = try AVAudioPlayer(contentsOf: audioUrl)
             player.prepareToPlay()
             
-            let fileSize = getFileSize(url: url)
+            let fileSize = getFileSize(url: audioUrl)
             let cachedItem = CachedAudioItem(
                 fileName: fileName,
                 fileExtension: fileExtension,

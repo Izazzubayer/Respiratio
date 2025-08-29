@@ -24,10 +24,26 @@ struct ContentView: View {
                 .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 
                 // Custom navigation bar
-                NavBar(selectedTab: $selectedTab)
+                NavBar(selectedTab: $selectedTab, onSameTabTapped: { tab in
+                    handleSameTabTapped(tab)
+                })
             }
         }
         .ignoresSafeArea(.all, edges: .bottom)
+    }
+    
+    // MARK: - Same Tab Tapped Handler
+    
+    private func handleSameTabTapped(_ tab: NavTab) {
+        // Trigger haptic feedback
+        let impactGenerator = UIImpactFeedbackGenerator(style: .light)
+        impactGenerator.impactOccurred()
+        
+        // Post notification to exit current session
+        NotificationCenter.default.post(
+            name: .exitToMainView,
+            object: tab
+        )
     }
 }
 

@@ -14,6 +14,30 @@ struct NoiseSessionView: View {
     @State private var showCompletionSheet = false
     @State private var sessionDuration: TimeInterval = 0
     
+    // MARK: - Notification Listener
+    @State private var exitNotificationObserver: NSObjectProtocol?
+    
+    // MARK: - Notification Methods
+    
+    private func setupExitNotificationListener() {
+        exitNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .exitToMainView,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let tab = notification.object as? NavTab, tab == .noise {
+                dismiss()
+            }
+        }
+    }
+    
+    private func cleanupExitNotificationListener() {
+        if let observer = exitNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+            exitNotificationObserver = nil
+        }
+    }
+    
     var body: some View {
         ZStack {
             // Background matching app theme
@@ -79,8 +103,21 @@ struct NoiseSessionView: View {
         }
         }
         .navigationBarHidden(true)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 100 && abs(value.translation.height) < 50 {
+                        // Swipe right with minimal vertical movement
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        #endif
+                        dismiss()
+                    }
+                }
+        )
         .onAppear { 
             engine.load(noise: noise)
+            setupExitNotificationListener()
             // Set up completion callback
             engine.onSessionComplete = {
                 sessionDuration = engine.elapsed
@@ -89,6 +126,9 @@ struct NoiseSessionView: View {
                     showCompletionSheet = true
                 }
             }
+        }
+        .onDisappear {
+            cleanupExitNotificationListener()
         }
         .sheet(isPresented: $showCustom) { 
             customDurationSheet 

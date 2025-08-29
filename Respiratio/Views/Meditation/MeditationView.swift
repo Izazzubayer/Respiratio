@@ -53,7 +53,11 @@ private func createDomainPreset(
         description: description,
         duration: TimeInterval(minutes * 60), // Convert minutes to seconds
         category: category,
-        difficulty: difficulty
+        difficulty: difficulty,
+        symbol: symbol,
+        audioFileName: audioFileName,
+        hasAudio: hasAudio,
+        tags: tags
     )
 }
 
@@ -224,11 +228,13 @@ private struct MeditationCard: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(cardColors[colorIndex % cardColors.count])
             
-        HStack(spacing: 16) {
+        VStack(spacing: 16) {
+            // Top row: Content and illustration side by side
+            HStack(spacing: 16) {
                 // Content side
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                    Text(preset.title)
+                        Text(preset.title)
                             .font(.custom("AnekGujarati-Bold", size: 20))
                             .foregroundColor(.white)
                             .lineLimit(nil)
@@ -241,32 +247,35 @@ private struct MeditationCard: View {
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    
-                    // Tags
-                if !displayTags.isEmpty {
-                        HStack(spacing: 8) {
-                            ForEach(Array(displayTags.prefix(3).enumerated()), id: \.offset) { _, tag in
-                                Text(tag)
-                                    .font(.custom("AnekGujarati-Medium", size: 10))
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 12)
-                                    .background(
-                                        Capsule()
-                                            .fill(Color.black.opacity(0.3))
-                                    )
-                            }
-                        }
-                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                // Vector illustration side - blended with card background
+                // Vector illustration side
                 Image(illustrationName)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 136, height: 136)
             }
+            
+            // Bottom row: Tags spanning full width below both content and illustration
+            if !displayTags.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(Array(displayTags.prefix(3)), id: \.self) { tag in
+                        Text(tag)
+                            .font(.custom("AnekGujarati-Medium", size: 12))
+                            .foregroundColor(.white)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            // .frame(maxWidth: 100)
+                            .background(
+                                Capsule()
+                                    .fill(Color.black.opacity(0.3))
+                            )
+                    }
+                    Spacer()
+                }
+            }
+        }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }

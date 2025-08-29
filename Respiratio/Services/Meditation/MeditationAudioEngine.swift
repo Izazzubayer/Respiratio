@@ -83,18 +83,21 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
     
     // MARK: - Load Audio
     func loadMeditation(fileName: String, title: String) {
+        print("🔊 Loading meditation: \(fileName) - \(title)")
         stop()
         currentMeditationTitle = title
         
-        guard let url = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
-            print("Meditation audio file not found: \(fileName).mp3")
+        // Look for audio file directly in main bundle
+        guard let audioUrl = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
+            print("❌ Meditation audio file not found: \(fileName).mp3")
             return
         }
         
+        print("✅ Found audio file at: \(audioUrl)")
         configureAudioSession()
         
         do {
-            player = try AVAudioPlayer(contentsOf: url)
+            player = try AVAudioPlayer(contentsOf: audioUrl)
             player?.delegate = self
             player?.enableRate = true // Enable rate control
             player?.volume = isMuted ? 0 : volume
@@ -104,6 +107,8 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
             duration = player?.duration ?? 0
             currentTime = 0
             
+            print("✅ Audio loaded successfully - Duration: \(duration)s")
+            
             setupRemoteCommands()
             setupNowPlaying()
             
@@ -111,24 +116,37 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
             UIApplication.shared.beginReceivingRemoteControlEvents()
             
         } catch {
-            print("Failed to load meditation audio:", error)
+            print("❌ Failed to load meditation audio:", error)
         }
     }
     
     // MARK: - Playback Controls
     func play() {
-        guard let player = player else { return }
+        print("▶️ Attempting to play meditation audio...")
+        guard let player = player else { 
+            print("❌ No player available - audio not loaded")
+            return 
+        }
         
+        print("✅ Player found, configuring audio session...")
         configureAudioSession()
         sessionStartTime = Date()
         
         // Ensure audio session is active for background playback
-        try? AVAudioSession.sharedInstance().setActive(true, options: [])
+        do {
+            try AVAudioSession.sharedInstance().setActive(true, options: [])
+            print("✅ Audio session activated")
+        } catch {
+            print("❌ Failed to activate audio session: \(error)")
+        }
         
+        print("🎵 Starting playback...")
         player.play()
         isPlaying = true
         startUpdateTimer()
         updateNowPlaying()
+        
+        print("✅ Playback started successfully")
         
         // Haptic feedback
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()

@@ -199,7 +199,7 @@ private struct NoiseCard: View {
                         HStack(spacing: 8) {
                             ForEach(Array(preset.tags.prefix(3).enumerated()), id: \.offset) { _, tag in
                                 Text(tag)
-                                    .font(.custom("AnekGujarati-Medium", size: 10))
+                                    .font(.custom("AnekGujarati-Medium", size: 12))
                                     .foregroundColor(.white)
                                     .padding(.vertical, 6)
                                     .padding(.horizontal, 12)

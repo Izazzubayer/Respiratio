@@ -26,6 +26,7 @@ enum NavTab: String, CaseIterable {
 
 struct NavBar: View {
     @Binding var selectedTab: NavTab
+    let onSameTabTapped: (NavTab) -> Void
     
     private let tabWidth: CGFloat = 122
     private let tabSpacing: CGFloat = 8
@@ -61,8 +62,14 @@ struct NavBar: View {
                         tab: tab,
                         isSelected: selectedTab == tab
                     ) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            selectedTab = tab
+                        if selectedTab == tab {
+                            // Same tab tapped - trigger exit action
+                            onSameTabTapped(tab)
+                        } else {
+                            // Different tab tapped - switch to it
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                selectedTab = tab
+                            }
                         }
                         
                         // Haptic feedback
@@ -126,7 +133,9 @@ private struct NavBarItem: View {
     return VStack {
         Spacer()
         
-        NavBar(selectedTab: $selectedTab)
+        NavBar(selectedTab: $selectedTab, onSameTabTapped: { tab in
+            print("Same tab tapped: \(tab)")
+        })
     }
     .background(Color.gray.opacity(0.1))
 }
