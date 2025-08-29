@@ -133,11 +133,15 @@ struct BreathingSessionView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Use design system background colors
+            LinearGradient(
+                colors: [DesignSystem.Colors.background, DesignSystem.Colors.secondaryBackground],
+                startPoint: .topLeading, 
+                endPoint: .bottomTrailing
+            )
             .ignoresSafeArea()
 
-            VStack(spacing: 20) {
+            VStack(spacing: DesignSystem.Spacing.xxl) {
                 header
 
                 Spacer(minLength: 0)
@@ -167,14 +171,15 @@ struct BreathingSessionView: View {
                     .frame(width: 260, height: 260)
                 }
 
-                VStack(spacing: 8) {
+                VStack(spacing: DesignSystem.Spacing.sm) {
                     PhaseChip(kind: model.currentPhase.kind, tint: model.exercise.tint)
                     Text(timeString(model.remaining))
                         .font(.system(size: 44, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
+                        .foregroundColor(DesignSystem.Colors.primaryText)
                 }
-                .padding(.top, 6)
+                .padding(.top, DesignSystem.Spacing.xs)
 
                 Spacer(minLength: 0)
             }
@@ -192,23 +197,6 @@ struct BreathingSessionView: View {
                     }
                 }
         )
-        // Remove custom back button to avoid duplicate back button
-        /*
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    dismiss()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text("Breathing")
-                    }
-                    .foregroundStyle(.blue)
-                    .font(.headline)
-                }
-            }
-        }
-        */
         .onAppear {
             // Do NOT auto-start; keep paused by default
             try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
@@ -223,7 +211,7 @@ struct BreathingSessionView: View {
         }
         .onChange(of: model.finished) { _, done in
             guard done else { return }
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) { showDone = true }
+            withAnimation(DesignSystem.Animation.spring) { showDone = true }
         }
         .safeAreaInset(edge: .bottom) {
             BottomControls(
@@ -233,7 +221,7 @@ struct BreathingSessionView: View {
                 tint: model.exercise.tint
             )
             .background(.ultraThinMaterial)
-            .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
+            .shadowMedium()
         }
         .sheet(isPresented: $showDone, onDismiss: { dismiss() }) {
             DoneSheet(exercise: model.exercise, total: model.totalSeconds)
@@ -243,26 +231,27 @@ struct BreathingSessionView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) { // Increased from 4 to 8 for better HIG spacing
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                 Text(model.exercise.title)
-                    .font(.headline)
+                    .font(DesignSystem.Typography.headline)
+                    .foregroundColor(DesignSystem.Colors.primaryText)
                 // 👇 SHOW DESCRIPTION (1–3 lines)
                 Text(model.exercise.description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignSystem.Typography.subheadline)
+                    .foregroundColor(DesignSystem.Colors.secondaryText)
                     .lineLimit(3)
             }
 
             Spacer()
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
                 DurationPill(color: model.exercise.tint, minutes: model.totalSeconds / 60)
                 KeepAwakeToggle()
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
+        .padding(.horizontal, DesignSystem.Spacing.lg)
+        .padding(.top, DesignSystem.Spacing.sm)
     }
     
     private func timeString(_ s: Int) -> String {
@@ -322,9 +311,9 @@ private struct SyncedBreathOrb: View {
             .shadow(color: tint.opacity(glowOpacity), radius: glowRadius)
             .overlay(
                 Text("\(max(0, secondsLeft))")
-                    .font(.title2.weight(.semibold))
+                    .font(DesignSystem.Typography.title2.weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(.primary)
+                    .foregroundColor(DesignSystem.Colors.primaryText)
             )
             .accessibilityLabel(accessibilityText)
     }
@@ -353,11 +342,18 @@ private struct PhaseChip: View {
             }
         }()
         return Label(text, systemImage: icon)
-            .font(.footnote.weight(.semibold))
-            .padding(.vertical, 6)
-            .padding(.horizontal, 10)
-            .background(Capsule().fill(tint.opacity(0.12)))
-            .foregroundStyle(tint)
+            .font(DesignSystem.Typography.footnote.weight(.semibold))
+            .padding(.vertical, DesignSystem.Spacing.xs)
+            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .background(
+                Capsule()
+                    .fill(tint.opacity(0.12))
+                    .overlay(
+                        Capsule()
+                            .stroke(tint.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .foregroundColor(tint)
     }
 }
 
@@ -366,10 +362,18 @@ private struct DurationPill: View {
     let minutes: Int
     var body: some View {
         Label("\(minutes) min", systemImage: "timer")
-            .font(.subheadline.weight(.semibold))
-            .padding(.vertical, 6).padding(.horizontal, 10)
-            .background(Capsule().fill(color.opacity(0.12)))
-            .foregroundStyle(color)
+            .font(DesignSystem.Typography.subheadline.weight(.semibold))
+            .padding(.vertical, DesignSystem.Spacing.xs)
+            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .background(
+                Capsule()
+                    .fill(color.opacity(0.12))
+                    .overlay(
+                        Capsule()
+                            .stroke(color.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .foregroundColor(color)
     }
 }
 
@@ -380,11 +384,11 @@ private struct BottomControls: View {
     let tint: Color
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignSystem.Spacing.md) {
             Button(action: startPause) {
                 Label(isRunning ? "Pause" : "Play",
                       systemImage: isRunning ? "pause.fill" : "play.fill")
-                    .font(.headline)
+                    .font(DesignSystem.Typography.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -393,15 +397,15 @@ private struct BottomControls: View {
 
             Button(role: .destructive, action: stop) {
                 Label("Stop", systemImage: "stop.fill")
-                    .font(.headline)
+                    .font(DesignSystem.Typography.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
+        .padding(.horizontal, DesignSystem.Spacing.lg)
+        .padding(.top, DesignSystem.Spacing.sm)
+        .padding(.bottom, DesignSystem.Spacing.md)
     }
 }
 
@@ -411,28 +415,32 @@ private struct DoneSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 10) {
+        VStack(spacing: DesignSystem.Spacing.lg) {
+            HStack(spacing: DesignSystem.Spacing.sm) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 24))
-                    .foregroundStyle(.green)
-                VStack(alignment: .leading, spacing: 6) { // Increased from 2 to 6 for better HIG spacing
-                    Text("Nice breathing!").font(.title3.weight(.semibold))
-                    Text(exercise.title).foregroundStyle(.secondary)
+                    .foregroundColor(DesignSystem.Colors.success)
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                    Text("Nice breathing!")
+                        .font(DesignSystem.Typography.title3.weight(.semibold))
+                        .foregroundColor(DesignSystem.Colors.primaryText)
+                    Text(exercise.title)
+                        .foregroundColor(DesignSystem.Colors.secondaryText)
                 }
                 Spacer()
             }
-            HStack(spacing: 12) {
-                stat(title: "Duration", value: "\(total / 60) min", symbol: "timer", tint: .blue)
+            HStack(spacing: DesignSystem.Spacing.md) {
+                stat(title: "Duration", value: "\(total / 60) min", symbol: "timer", tint: DesignSystem.Colors.info)
                 stat(title: "Cycles", value: "\(cycleCount)", symbol: "repeat", tint: .mint)
             }
             Button { dismiss() } label: {
-                Text("Done").frame(maxWidth: .infinity)
+                Text("Done")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.xxl)
     }
 
     private var cycleCount: Int {
@@ -441,16 +449,28 @@ private struct DoneSheet: View {
     }
 
     private func stat(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            HStack(spacing: DesignSystem.Spacing.xs) {
                 Image(systemName: symbol)
-                Text(title).font(.caption).foregroundStyle(.secondary)
+                Text(title)
+                    .font(DesignSystem.Typography.caption1)
+                    .foregroundColor(DesignSystem.Colors.secondaryText)
                 Spacer()
-            }.foregroundStyle(tint)
-            Text(value).font(.headline)
+            }
+            .foregroundColor(tint)
+            Text(value)
+                .font(DesignSystem.Typography.headline)
+                .foregroundColor(DesignSystem.Colors.primaryText)
         }
-        .padding(12)
+        .padding(DesignSystem.Spacing.md)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.thinMaterial))
+        .background(
+            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large)
+                .fill(DesignSystem.Colors.overlay)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large)
+                        .stroke(DesignSystem.Colors.overlayBorder, lineWidth: 1)
+                )
+        )
     }
 }
