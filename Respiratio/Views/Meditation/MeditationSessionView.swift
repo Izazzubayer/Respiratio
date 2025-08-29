@@ -199,11 +199,17 @@ struct MeditationSessionView: View {
             dismiss()
         }) {
             MeditationCompletionSheet(streak: streak, preset: preset, sessionDuration: sessionDuration)
-                .presentationDetents([.fraction(0.5), .medium])
+                .presentationDetents([.fraction(0.65), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: "#1A2B7C"))
                 .presentationCornerRadius(24)
         }
+        .overlay(
+            // Dark background overlay when sheet is presented
+            Color.black.opacity(showCompletionSheet ? 0.25 : 0)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.3), value: showCompletionSheet)
+        )
     }
 
     // MARK: - Helper Functions
@@ -305,8 +311,8 @@ struct MeditationSessionView: View {
                 .padding(.horizontal, 16)
                 
                 // Time display - Apple Media Player style
-                HStack {
-                    if preset.hasAudio {
+        HStack {
+                if preset.hasAudio {
                         // Current time
                         Text(formatTime(audioEngine.currentTime))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -360,10 +366,10 @@ struct MeditationSessionView: View {
                     let selected = duration == Int(preset.duration / 60)
                     
                     if selected {
-                Button {
+                    Button {
                             // Duration is fixed for meditation presets
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        } label: {
+                    } label: {
                             Text("\(duration)m")
                                 .font(.custom("AnekGujarati-Bold", size: 15))
                                 .foregroundColor(.white)
@@ -475,7 +481,7 @@ struct MeditationSessionView: View {
                 
                 // Main play/pause button - Original design (like noise player)
                 Button {
-                    if preset.hasAudio {
+                if preset.hasAudio {
                         if audioEngine.isPlaying {
                             audioEngine.pause()
                         } else {
@@ -489,7 +495,7 @@ struct MeditationSessionView: View {
                         }
                     }
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                } label: {
+            } label: {
                     ZStack {
                         // Outer glow ring
                         Circle()
@@ -912,7 +918,7 @@ private struct CompletionSheet: View {
             HStack(spacing: 12) {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 32))
+                        .font(.system(size: 24))
                         .foregroundStyle(.green)
                     VStack(alignment: .leading, spacing: 6) { // Increased from 2 to 6 for better HIG spacing
                         Text("Great job!").font(.title3.weight(.semibold))
@@ -1054,7 +1060,7 @@ private struct MeditationCompletionSheet: View {
 
             if let last = streak.lastCompletionDate {
                 Text("Last session: \(formatted(last))")
-                    .font(DesignSystem.Typography.caption2)
+                    .font(.custom("AnekGujarati-Regular", size: 18))
                     .foregroundColor(.white.opacity(0.6))
             }
 
