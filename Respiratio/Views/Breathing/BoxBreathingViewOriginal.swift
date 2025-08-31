@@ -31,7 +31,7 @@ struct BoxBreathingViewOriginal: View {
                 .cornerRadius(999)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Box Breathing")
-                        .font(Font.custom("Amagro", size: 24).weight(.bold))
+                        .font(Font.custom("AnekGujarati-ExtraBold", size: 24))
                         .lineSpacing(26)
                         .foregroundColor(.white)
                     Text("Inhale, hold, exhale, and hold again. Repeat this for 2 minutes to calm the mind & sharpen focus.")

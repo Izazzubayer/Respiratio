@@ -66,6 +66,10 @@ struct NoiseSessionView: View {
                 // Custom Back Button - positioned at the top
                 HStack {
                     Button(action: {
+                        // Stop audio immediately when back button is tapped
+                        if engine.isPlaying {
+                            engine.stop()
+                        }
                         // Add haptic feedback
                         #if os(iOS)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -125,6 +129,10 @@ struct NoiseSessionView: View {
             DragGesture()
                 .onEnded { value in
                     if value.translation.width > 100 && abs(value.translation.height) < 50 {
+                        // Stop audio immediately when swipe gesture is triggered
+                        if engine.isPlaying {
+                            engine.stop()
+                        }
                         // Swipe right with minimal vertical movement
                         #if os(iOS)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -136,6 +144,8 @@ struct NoiseSessionView: View {
         .onAppear { 
             engine.load(noise: noise)
             setupExitNotificationListener()
+            // Notify that noise session has started
+            NotificationCenter.default.post(name: .noiseSessionStarted, object: nil)
             // Set up completion callback
             engine.onSessionComplete = {
                 sessionDuration = engine.elapsed
@@ -147,12 +157,20 @@ struct NoiseSessionView: View {
         }
         .onDisappear {
             cleanupExitNotificationListener()
+            // Stop audio immediately when view disappears
+            if engine.isPlaying {
+                engine.stop()
+            }
+            // Notify that noise session has ended
+            NotificationCenter.default.post(name: .noiseSessionEnded, object: nil)
         }
         .sheet(isPresented: $showCustom) { 
             customDurationSheet 
         }
         .sheet(isPresented: $showCompletionSheet, onDismiss: {
             dismiss()
+            // Notify that noise session has ended when completion sheet is dismissed
+            NotificationCenter.default.post(name: .noiseSessionEnded, object: nil)
         }) {
             NoiseCompletionSheet(streak: streak, noise: noise, sessionDuration: sessionDuration)
                 .presentationDetents([.fraction(0.45), .medium])
@@ -561,7 +579,7 @@ private struct NoiseCompletionSheet: View {
                         .font(.system(size: 20))
                         .foregroundStyle(tintColor(for: noise))
                     Text("\(noise.title) Session")
-                        .font(.custom("Amagro-Bold", size: 18))
+                        .font(.custom("AnekGujarati-Bold", size: 18))
                         .foregroundColor(.white)
                     Spacer()
                 }
@@ -648,7 +666,7 @@ private struct NoiseCompletionSheet: View {
             }
             .foregroundStyle(tint)
             Text(value)
-                .font(.custom("Amagro-Bold", size: 20))
+                .font(.custom("AnekGujarati-Bold", size: 20))
                 .foregroundColor(.white)
         }
         .padding(16)

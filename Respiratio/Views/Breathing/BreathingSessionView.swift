@@ -207,7 +207,7 @@ struct BreathingSessionView: View {
                                     .frame(width: 220, height: 220)
                                     .overlay(
                                         Text("\(max(0, model.phaseRemaining))")
-                                            .font(.custom("AnekGujarati-Bold", size: 32))
+                                            .font(.custom("Amagro-Bold", size: 32))
                                             .monospacedDigit()
                                             .foregroundColor(.white)
                                     )
@@ -217,7 +217,7 @@ struct BreathingSessionView: View {
                             VStack(spacing: 16) {
                                 PhaseChip(kind: model.currentPhase.kind, tint: .white)
                                 Text(timeString(model.remaining))
-                                    .font(.custom("AnekGujarati-Bold", size: 44))
+                                    .font(.custom("Amagro-Bold", size: 44))
                                     .monospacedDigit()
                                     .contentTransition(.numericText())
                                     .foregroundColor(.white)

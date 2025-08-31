@@ -95,7 +95,7 @@ struct MigrationExample {
     /*
     VStack(spacing: 24) {
         Text("Title")
-            .font(.custom("Amagro-Bold", size: 24))
+                            .font(.custom("Amagro-Bold", size: 24))
             .foregroundColor(.white)
     }
     .padding(24)

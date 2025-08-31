@@ -28,7 +28,7 @@ struct WelcomeView: View {
 
                 VStack(spacing: 8) {
                     Text("Dr. Andrew Huberman")
-                        .font(.custom("AnekGujarati-Bold", size: 18))
+                        .font(.custom("Amagro-Bold", size: 18))
                         .foregroundColor(.black)
 
                     Text("Professor of Neurobiology and Ophthalmology")

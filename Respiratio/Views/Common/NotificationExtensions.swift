@@ -23,4 +23,10 @@ extension Notification.Name {
     
     /// Notification sent when a meditation session ends
     static let meditationSessionEnded = Notification.Name("meditationSessionEnded")
+    
+    /// Notification sent when a noise session starts
+    static let noiseSessionStarted = Notification.Name("noiseSessionStarted")
+    
+    /// Notification sent when a noise session ends
+    static let noiseSessionEnded = Notification.Name("noiseSessionEnded")
 }

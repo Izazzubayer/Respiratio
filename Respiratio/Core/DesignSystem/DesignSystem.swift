@@ -43,27 +43,38 @@ enum DesignSystem {
     // MARK: - Typography
     enum Typography {
         // Font Families
-        static let primaryFont = "Amagro-Bold"
-        static let secondaryFont = "AnekGujarati-Regular"
+        static let titleFont = "Amagro-Bold"
+        static let headerFont = "Amagro-Bold"
+        static let bodyFont = "AnekGujarati-Regular"
         static let mediumFont = "AnekGujarati-Medium"
         
         // Font Sizes (following Apple's Dynamic Type scale)
-        static let largeTitle = Font.custom(primaryFont, size: 34)
-        static let title1 = Font.custom(primaryFont, size: 28)
-        static let title2 = Font.custom(primaryFont, size: 22)
-        static let title3 = Font.custom(primaryFont, size: 20)
-        static let headline = Font.custom(primaryFont, size: 17)
-        static let body = Font.custom(secondaryFont, size: 17)
-        static let callout = Font.custom(secondaryFont, size: 16)
-        static let subheadline = Font.custom(secondaryFont, size: 15)
-        static let footnote = Font.custom(secondaryFont, size: 13)
-        static let caption1 = Font.custom(secondaryFont, size: 12)
-        static let caption2 = Font.custom(secondaryFont, size: 11)
+        static let largeTitle = Font.custom(titleFont, size: 34)
+        static let title1 = Font.custom(titleFont, size: 28)
+        static let title2 = Font.custom(titleFont, size: 22)
+        static let title3 = Font.custom(titleFont, size: 20)
+        static let headline = Font.custom(headerFont, size: 17)
+        static let body = Font.custom(bodyFont, size: 17)
+        static let callout = Font.custom(bodyFont, size: 16)
+        static let subheadline = Font.custom(bodyFont, size: 15)
+        static let footnote = Font.custom(bodyFont, size: 13)
+        static let caption1 = Font.custom(bodyFont, size: 12)
+        static let caption2 = Font.custom(bodyFont, size: 11)
         
         // Custom Sizes for specific use cases
-        static let buttonText = Font.custom(primaryFont, size: 16)
-        static let cardTitle = Font.custom(primaryFont, size: 18)
-        static let statValue = Font.custom(primaryFont, size: 18)
+        static let buttonText = Font.custom(headerFont, size: 16)
+        static let cardTitle = Font.custom(titleFont, size: 18)
+        static let statValue = Font.custom(headerFont, size: 18)
+        
+        // Additional sizes found in the app
+        static let extraLargeTitle = Font.custom(titleFont, size: 44)
+        static let superLargeTitle = Font.custom(titleFont, size: 32)
+        static let mediumHeader = Font.custom(headerFont, size: 15)
+        static let smallHeader = Font.custom(headerFont, size: 14)
+        static let mediumBody = Font.custom(bodyFont, size: 18)
+        static let smallBody = Font.custom(bodyFont, size: 16)
+        static let tinyBody = Font.custom(bodyFont, size: 14)
+        static let microBody = Font.custom(bodyFont, size: 12)
     }
     
     // MARK: - Spacing
@@ -162,6 +173,43 @@ extension View {
     
     func captionText() -> some View {
         self.font(DesignSystem.Typography.caption1)
+    }
+    
+    // Additional convenience modifiers for common patterns
+    func mainTitle() -> some View {
+        self.font(DesignSystem.Typography.title1)
+    }
+    
+    func sectionTitle() -> some View {
+        self.font(DesignSystem.Typography.title2)
+    }
+    
+    func cardTitle() -> some View {
+        self.font(DesignSystem.Typography.cardTitle)
+    }
+    
+    func buttonText() -> some View {
+        self.font(DesignSystem.Typography.buttonText)
+    }
+    
+    func statValue() -> some View {
+        self.font(DesignSystem.Typography.statValue)
+    }
+    
+    func mediumBody() -> some View {
+        self.font(DesignSystem.Typography.mediumBody)
+    }
+    
+    func smallBody() -> some View {
+        self.font(DesignSystem.Typography.smallBody)
+    }
+    
+    func tinyBody() -> some View {
+        self.font(DesignSystem.Typography.tinyBody)
+    }
+    
+    func microBody() -> some View {
+        self.font(DesignSystem.Typography.microBody)
     }
     
     // Spacing modifiers
