@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab: NavTab = .meditation
+    @State private var isMeditationSessionActive = false
     
     var body: some View {
         ZStack {
@@ -22,14 +23,45 @@ struct ContentView: View {
                         .tag(NavTab.noise)
                 }
                 .animation(.easeInOut(duration: 0.4), value: selectedTab)
+                .onChange(of: selectedTab) { _, newTab in
+                    // Only allow tab changes if meditation session is not active
+                    if isMeditationSessionActive && newTab != .meditation {
+                        // Provide haptic feedback to indicate tabs are disabled
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        // Revert back to meditation tab if session is active
+                        selectedTab = .meditation
+                        return
+                    }
+                    
+                    // Post notification when tab changes so audio can be paused immediately
+                    // But don't post if we're staying on meditation tab (to avoid conflicts)
+                    if newTab != .meditation {
+                        NotificationCenter.default.post(
+                            name: .tabDidChange,
+                            object: newTab
+                        )
+                    }
+                }
                 
                 // Custom navigation bar
                 NavBar(selectedTab: $selectedTab, onSameTabTapped: { tab in
                     handleSameTabTapped(tab)
                 })
+                .disabled(isMeditationSessionActive)
+                .opacity(isMeditationSessionActive ? 0.5 : 1.0)
             }
         }
         .ignoresSafeArea(.all, edges: .bottom)
+        .onReceive(NotificationCenter.default.publisher(for: .meditationSessionStarted)) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isMeditationSessionActive = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .meditationSessionEnded)) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isMeditationSessionActive = false
+            }
+        }
     }
     
     // MARK: - Same Tab Tapped Handler

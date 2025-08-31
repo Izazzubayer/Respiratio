@@ -70,8 +70,8 @@ struct TriangleBreathingView: View {
                     
                     // Center instruction text
                     Text(currentPhase.uppercased())
-                        .font(.title.weight(.bold))
-                        .foregroundStyle(tint)
+                        .font(DesignSystem.Typography.title2.weight(.bold))
+                        .foregroundColor(.white)
                         .contentTransition(.opacity)
                 }
                 .accessibilityElement(children: .combine)

@@ -135,6 +135,12 @@ struct MeditationSessionView: View {
                 // Custom Back Button - positioned at the top
                 HStack {
                     Button(action: {
+                        // Stop audio immediately when back button is tapped
+                        if preset.hasAudio {
+                            audioEngine.stop()
+                        } else if model.isRunning {
+                            model.pause()
+                        }
                         // Add haptic feedback
                         #if os(iOS)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -191,6 +197,12 @@ struct MeditationSessionView: View {
             DragGesture()
                 .onEnded { value in
                     if value.translation.width > 100 && abs(value.translation.height) < 50 {
+                        // Stop audio immediately when swipe gesture is triggered
+                        if preset.hasAudio {
+                            audioEngine.stop()
+                        } else if model.isRunning {
+                            model.pause()
+                        }
                         // Swipe right with minimal vertical movement
                         #if os(iOS)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -202,6 +214,8 @@ struct MeditationSessionView: View {
         .onAppear {
             setupSession()
             setupExitNotificationListener()
+            // Notify that meditation session has started
+            NotificationCenter.default.post(name: .meditationSessionStarted, object: nil)
         }
         .onChange(of: model.finished) { _, finished in
             guard finished else { return }
@@ -225,6 +239,14 @@ struct MeditationSessionView: View {
         }
         .onDisappear {
             cleanupExitNotificationListener()
+            // Stop audio immediately when view disappears
+            if preset.hasAudio {
+                audioEngine.stop()
+            } else if model.isRunning {
+                model.pause()
+            }
+            // Notify that meditation session has ended
+            NotificationCenter.default.post(name: .meditationSessionEnded, object: nil)
         }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
             // Force UI update when audio route changes
@@ -237,6 +259,8 @@ struct MeditationSessionView: View {
         }
         .sheet(isPresented: $showCompletionSheet, onDismiss: {
             dismiss()
+            // Notify that meditation session has ended when completion sheet is dismissed
+            NotificationCenter.default.post(name: .meditationSessionEnded, object: nil)
         }) {
             MeditationCompletionSheet(streak: streak, preset: preset, sessionDuration: sessionDuration)
                 .presentationDetents([.fraction(0.65), .large])

@@ -16,6 +16,7 @@ struct NoiseSessionView: View {
     
     // MARK: - Notification Listener
     @State private var exitNotificationObserver: NSObjectProtocol?
+    @State private var tabChangeObserver: NSObjectProtocol?
     
     // MARK: - Notification Methods
     
@@ -29,12 +30,29 @@ struct NoiseSessionView: View {
                 dismiss()
             }
         }
+        
+        // Listen for tab changes to pause audio immediately
+        tabChangeObserver = NotificationCenter.default.addObserver(
+            forName: .tabDidChange,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Pause noise audio immediately when tab changes
+            if engine.isPlaying {
+                engine.stop()
+            }
+        }
     }
     
     private func cleanupExitNotificationListener() {
         if let observer = exitNotificationObserver {
             NotificationCenter.default.removeObserver(observer)
             exitNotificationObserver = nil
+        }
+        
+        if let observer = tabChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            tabChangeObserver = nil
         }
     }
     

@@ -105,6 +105,7 @@ struct BreathingSessionView: View {
     
     // MARK: - Notification Listener
     @State private var exitNotificationObserver: NSObjectProtocol?
+    @State private var tabChangeObserver: NSObjectProtocol?
 
     init(exercise: BreathingExercise, totalSeconds: Int = 120) {
         _model = .init(wrappedValue: .init(exercise: exercise, totalSeconds: totalSeconds))
@@ -122,6 +123,18 @@ struct BreathingSessionView: View {
                 dismiss()
             }
         }
+        
+        // Listen for tab changes to pause breathing session immediately
+        tabChangeObserver = NotificationCenter.default.addObserver(
+            forName: .tabDidChange,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Pause breathing session immediately when tab changes
+            if model.isRunning {
+                model.pause()
+            }
+        }
     }
     
     private func cleanupExitNotificationListener() {
@@ -129,59 +142,175 @@ struct BreathingSessionView: View {
             NotificationCenter.default.removeObserver(observer)
             exitNotificationObserver = nil
         }
+        
+        if let observer = tabChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            tabChangeObserver = nil
+        }
     }
 
     var body: some View {
         ZStack {
-            // Use design system background colors
-            LinearGradient(
-                colors: [DesignSystem.Colors.background, DesignSystem.Colors.secondaryBackground],
-                startPoint: .topLeading, 
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background gradient matching meditation/noise screens
+            Color(hex: "#1A2B7C")
+                .ignoresSafeArea()
 
-            VStack(spacing: DesignSystem.Spacing.xxl) {
-                header
+            VStack(spacing: 0) {
+                // Header section matching meditation/noise style
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(model.exercise.title.uppercased())
+                        .font(.custom("Amagro-Bold", size: 24))
+                        .foregroundColor(.white)
+                    
+                    Text(model.exercise.description)
+                        .font(.custom("AnekGujarati-Regular", size: 18))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(3)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 24)
 
-                Spacer(minLength: 0)
+                // Main content area
+                VStack(spacing: 32) {
+                    // Breathing visualization card
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "#4A90E2"), Color(hex: "#357ABD")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        VStack(spacing: 24) {
+                            // Use custom visualizations for specific breathing techniques
+                            if model.exercise.title == BreathingExercise.box.title {
+                                BoxBreathingView()
+                                    .frame(width: 240, height: 240)
+                            } else if model.exercise.title == BreathingExercise.fourSevenEight.title {
+                                TriangleBreathingView(
+                                    phase: model.currentPhase.kind,
+                                    phaseDuration: model.currentPhase.seconds,
+                                    secondsLeft: model.phaseRemaining,
+                                    tint: .white,
+                                    isRunning: model.isRunning,
+                                    phaseIndex: model.phaseIndex
+                                )
+                                .frame(width: 240, height: 240)
+                            } else {
+                                // Simple fallback for other breathing techniques
+                                Circle()
+                                    .fill(Color.white.opacity(0.3))
+                                    .frame(width: 220, height: 220)
+                                    .overlay(
+                                        Text("\(max(0, model.phaseRemaining))")
+                                            .font(.custom("AnekGujarati-Bold", size: 32))
+                                            .monospacedDigit()
+                                            .foregroundColor(.white)
+                                    )
+                            }
 
-                // Use custom visualizations for specific breathing techniques
-                if model.exercise.title == BreathingExercise.box.title {
-                    BoxBreathingView()
-                        .frame(width: 280, height: 280)
-                } else if model.exercise.title == BreathingExercise.fourSevenEight.title {
-                    TriangleBreathingView(
-                        phase: model.currentPhase.kind,
-                        phaseDuration: model.currentPhase.seconds,
-                        secondsLeft: model.phaseRemaining,
-                        tint: model.exercise.tint,
-                        isRunning: model.isRunning,
-                        phaseIndex: model.phaseIndex
-                    )
-                    .frame(width: 280, height: 280)
-                } else {
-                    SyncedBreathOrb(
-                        phase: model.currentPhase.kind,
-                        phaseDuration: model.currentPhase.seconds,
-                        secondsLeft: model.phaseRemaining,
-                        tint: model.exercise.tint,
-                        isRunning: model.isRunning
-                    )
-                    .frame(width: 260, height: 260)
+                            // Phase indicator and timer
+                            VStack(spacing: 16) {
+                                PhaseChip(kind: model.currentPhase.kind, tint: .white)
+                                Text(timeString(model.remaining))
+                                    .font(.custom("AnekGujarati-Bold", size: 44))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(24)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+
+                    // Session info card
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "#6C5CE7"), Color(hex: "#5B4BC4")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        HStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Session Info")
+                                    .font(.custom("AnekGujarati-Bold", size: 18))
+                                    .foregroundColor(.white)
+                                
+                                Text("Duration: \(model.totalSeconds / 60) minutes")
+                                    .font(.custom("AnekGujarati-Regular", size: 14))
+                                    .foregroundColor(.white.opacity(0.9))
+                                
+                                Text("Current Phase: \(model.currentPhase.kind.rawValue.capitalized)")
+                                    .font(.custom("AnekGujarati-Regular", size: 14))
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Image(systemName: "timer.circle.fill")
+                                .font(.system(size: 48, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 80, height: 80)
+                        }
+                        .padding(24)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+
+                    Spacer(minLength: 0)
                 }
 
-                VStack(spacing: DesignSystem.Spacing.sm) {
-                    PhaseChip(kind: model.currentPhase.kind, tint: model.exercise.tint)
-                    Text(timeString(model.remaining))
-                        .font(.system(size: 44, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                        .foregroundColor(DesignSystem.Colors.primaryText)
-                }
-                .padding(.top, DesignSystem.Spacing.xs)
+                // Bottom controls
+                VStack(spacing: 16) {
+                    // Control buttons
+                    HStack(spacing: 16) {
+                        Button(action: { model.isRunning ? model.pause() : model.start() }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: model.isRunning ? "pause.fill" : "play.fill")
+                                Text(model.isRunning ? "Pause" : "Play")
+                            }
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(hex: "#4A90E2"))
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
 
-                Spacer(minLength: 0)
+                        Button(action: { model.stop() }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "stop.fill")
+                                Text("Stop")
+                            }
+                            .font(.custom("AnekGujarati-Bold", size: 16))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(hex: "#E74C3C"))
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.horizontal, 24)
+
+                    // Keep awake toggle
+                    KeepAwakeToggle()
+                        .padding(.horizontal, 24)
+                }
+                .padding(.bottom, 32)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -189,7 +318,6 @@ struct BreathingSessionView: View {
             DragGesture()
                 .onEnded { value in
                     if value.translation.width > 100 && abs(value.translation.height) < 50 {
-                        // Swipe right with minimal vertical movement
                         #if os(iOS)
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         #endif
@@ -198,7 +326,6 @@ struct BreathingSessionView: View {
                 }
         )
         .onAppear {
-            // Do NOT auto-start; keep paused by default
             try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
             setupExitNotificationListener()
         }
@@ -211,17 +338,7 @@ struct BreathingSessionView: View {
         }
         .onChange(of: model.finished) { _, done in
             guard done else { return }
-            withAnimation(DesignSystem.Animation.spring) { showDone = true }
-        }
-        .safeAreaInset(edge: .bottom) {
-            BottomControls(
-                isRunning: model.isRunning,
-                startPause: { model.isRunning ? model.pause() : model.start() }, // shows Play initially
-                stop: { model.stop() },
-                tint: model.exercise.tint
-            )
-            .background(.ultraThinMaterial)
-            .shadowMedium()
+            withAnimation(.easeInOut(duration: 0.3)) { showDone = true }
         }
         .sheet(isPresented: $showDone, onDismiss: { dismiss() }) {
             DoneSheet(exercise: model.exercise, total: model.totalSeconds)
@@ -230,102 +347,10 @@ struct BreathingSessionView: View {
         }
     }
 
-    private var header: some View {
-        HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                Text(model.exercise.title)
-                    .font(DesignSystem.Typography.headline)
-                    .foregroundColor(DesignSystem.Colors.primaryText)
-                // 👇 SHOW DESCRIPTION (1–3 lines)
-                Text(model.exercise.description)
-                    .font(DesignSystem.Typography.subheadline)
-                    .foregroundColor(DesignSystem.Colors.secondaryText)
-                    .lineLimit(3)
-            }
-
-            Spacer()
-
-            HStack(spacing: DesignSystem.Spacing.sm) {
-                DurationPill(color: model.exercise.tint, minutes: model.totalSeconds / 60)
-                KeepAwakeToggle()
-            }
-        }
-        .padding(.horizontal, DesignSystem.Spacing.lg)
-        .padding(.top, DesignSystem.Spacing.sm)
-    }
-    
     private func timeString(_ s: Int) -> String {
         let m = s / 60, ss = s % 60
         return String(format: "%02d:%02d", m, ss)
     }
-}
-
-// MARK: - Synced visual (no outline, smooth/gradual)
-
-/// Matches Core Haptics strength. Stays static when paused.
-private struct SyncedBreathOrb: View {
-    let phase: BreathPhase.Kind
-    let phaseDuration: Int
-    let secondsLeft: Int
-    let tint: Color
-    let isRunning: Bool          // NEW
-
-    private var p: Double {
-        guard phaseDuration > 0 else { return 0 }
-        let done = Double(phaseDuration - secondsLeft)
-        return min(max(done / Double(phaseDuration), 0), 1)
-    }
-
-    private var strength: Double {
-        switch phase {
-        case .inhale: return lerp(0.25, 1.00, p)
-        case .hold:   return 0.45
-        case .exhale: return lerp(1.00, 0.05, p)
-        }
-    }
-
-    private var scale: CGFloat {
-        switch phase {
-        case .inhale: return CGFloat(lerp(0.65, 1.00, p))
-        case .hold:   return 1.00
-        case .exhale: return CGFloat(lerp(1.00, 0.65, p))
-        }
-    }
-
-    private var innerOpacity: Double { lerp(0.28, 0.55, strength) }
-    private var outerOpacity: Double { lerp(0.14, 0.26, strength) }
-    private var glowRadius: CGFloat { CGFloat(lerp(8, 42, strength)) }
-    private var glowOpacity: Double { lerp(0.10, 0.42, strength) }
-
-    var body: some View {
-        Circle()
-            .fill(
-                RadialGradient(
-                    colors: [tint.opacity(innerOpacity), tint.opacity(outerOpacity)],
-                    center: .center, startRadius: 2, endRadius: 140
-                )
-            )
-            .scaleEffect(scale)
-            // Only animate while running; static while paused.
-            .animation(isRunning ? .linear(duration: 0.95) : nil, value: secondsLeft)
-            .shadow(color: tint.opacity(glowOpacity), radius: glowRadius)
-            .overlay(
-                Text("\(max(0, secondsLeft))")
-                    .font(DesignSystem.Typography.title2.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundColor(DesignSystem.Colors.primaryText)
-            )
-            .accessibilityLabel(accessibilityText)
-    }
-
-    private var accessibilityText: String {
-        let name: String = {
-            switch phase { case .inhale: return "Inhale"; case .hold: return "Hold"; case .exhale: return "Exhale" }
-        }()
-        return "\(name) \(secondsLeft) seconds remaining"
-    }
-
-    private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double { a + (b - a) * t }
 }
 
 // MARK: - Small components
@@ -342,70 +367,14 @@ private struct PhaseChip: View {
             }
         }()
         return Label(text, systemImage: icon)
-            .font(DesignSystem.Typography.footnote.weight(.semibold))
-            .padding(.vertical, DesignSystem.Spacing.xs)
-            .padding(.horizontal, DesignSystem.Spacing.sm)
+            .font(.custom("AnekGujarati-Medium", size: 14))
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
             .background(
                 Capsule()
-                    .fill(tint.opacity(0.12))
-                    .overlay(
-                        Capsule()
-                            .stroke(tint.opacity(0.3), lineWidth: 1)
-                    )
+                    .fill(Color.black.opacity(0.3))
             )
             .foregroundColor(tint)
-    }
-}
-
-private struct DurationPill: View {
-    let color: Color
-    let minutes: Int
-    var body: some View {
-        Label("\(minutes) min", systemImage: "timer")
-            .font(DesignSystem.Typography.subheadline.weight(.semibold))
-            .padding(.vertical, DesignSystem.Spacing.xs)
-            .padding(.horizontal, DesignSystem.Spacing.sm)
-            .background(
-                Capsule()
-                    .fill(color.opacity(0.12))
-                    .overlay(
-                        Capsule()
-                            .stroke(color.opacity(0.3), lineWidth: 1)
-                    )
-            )
-            .foregroundColor(color)
-    }
-}
-
-private struct BottomControls: View {
-    let isRunning: Bool
-    let startPause: () -> Void
-    let stop: () -> Void
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: DesignSystem.Spacing.md) {
-            Button(action: startPause) {
-                Label(isRunning ? "Pause" : "Play",
-                      systemImage: isRunning ? "pause.fill" : "play.fill")
-                    .font(DesignSystem.Typography.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(tint)
-            .controlSize(.large)
-
-            Button(role: .destructive, action: stop) {
-                Label("Stop", systemImage: "stop.fill")
-                    .font(DesignSystem.Typography.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-        }
-        .padding(.horizontal, DesignSystem.Spacing.lg)
-        .padding(.top, DesignSystem.Spacing.sm)
-        .padding(.bottom, DesignSystem.Spacing.md)
     }
 }
 
@@ -415,32 +384,51 @@ private struct DoneSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: DesignSystem.Spacing.lg) {
-            HStack(spacing: DesignSystem.Spacing.sm) {
+        VStack(spacing: 24) {
+            HStack(spacing: 16) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 24))
-                    .foregroundColor(DesignSystem.Colors.success)
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                    .foregroundColor(Color(hex: "#4CAF50"))
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Nice breathing!")
-                        .font(DesignSystem.Typography.title3.weight(.semibold))
-                        .foregroundColor(DesignSystem.Colors.primaryText)
+                        .font(.custom("AnekGujarati-Bold", size: 20))
+                        .foregroundColor(.white)
                     Text(exercise.title)
-                        .foregroundColor(DesignSystem.Colors.secondaryText)
+                        .font(.custom("AnekGujarati-Regular", size: 16))
+                        .foregroundColor(.white.opacity(0.8))
                 }
                 Spacer()
             }
-            HStack(spacing: DesignSystem.Spacing.md) {
-                stat(title: "Duration", value: "\(total / 60) min", symbol: "timer", tint: DesignSystem.Colors.info)
-                stat(title: "Cycles", value: "\(cycleCount)", symbol: "repeat", tint: .mint)
+            
+            HStack(spacing: 16) {
+                stat(title: "Duration", value: "\(total / 60) min", symbol: "timer", tint: Color(hex: "#4A90E2"))
+                stat(title: "Cycles", value: "\(cycleCount)", symbol: "repeat", tint: Color(hex: "#4CAF50"))
             }
+            
             Button { dismiss() } label: {
                 Text("Done")
+                    .font(.custom("AnekGujarati-Bold", size: 16))
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(hex: "#4A90E2"))
+                    )
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(PlainButtonStyle())
         }
-        .padding(DesignSystem.Spacing.xxl)
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: "#6C5CE7"), Color(hex: "#5B4BC4")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
     }
 
     private var cycleCount: Int {
@@ -449,27 +437,27 @@ private struct DoneSheet: View {
     }
 
     private func stat(title: String, value: String, symbol: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            HStack(spacing: DesignSystem.Spacing.xs) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
                 Image(systemName: symbol)
                 Text(title)
-                    .font(DesignSystem.Typography.caption1)
-                    .foregroundColor(DesignSystem.Colors.secondaryText)
+                    .font(.custom("AnekGujarati-Medium", size: 12))
+                    .foregroundColor(.white.opacity(0.8))
                 Spacer()
             }
             .foregroundColor(tint)
             Text(value)
-                .font(DesignSystem.Typography.headline)
-                .foregroundColor(DesignSystem.Colors.primaryText)
+                .font(.custom("AnekGujarati-Bold", size: 18))
+                .foregroundColor(.white)
         }
-        .padding(DesignSystem.Spacing.md)
+        .padding(16)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large)
-                .fill(DesignSystem.Colors.overlay)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.2))
                 .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large)
-                        .stroke(DesignSystem.Colors.overlayBorder, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
         )
     }

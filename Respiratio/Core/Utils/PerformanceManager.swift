@@ -46,6 +46,8 @@ final class PerformanceManager: ObservableObject {
     private var lastFrameTime: CFTimeInterval = 0
     private var frameCount: Int = 0
     private var displayLink: CADisplayLink?
+    private var cancellables = Set<AnyCancellable>()
+    private var stutterCount: Int = 0
     
     // MARK: - Performance Alert
     struct PerformanceAlert: Identifiable {
@@ -56,7 +58,7 @@ final class PerformanceManager: ObservableObject {
         let severity: Severity
         
         enum AlertType {
-            case slowOperation, highMemory, highCPU, lowFrameRate
+            case slowOperation, highMemory, highCPU, lowFrameRate, animationStutter
         }
         
         enum Severity {
@@ -67,11 +69,13 @@ final class PerformanceManager: ObservableObject {
     init() {
         setupDisplayLink()
         startMonitoring()
+        setupAnimationMonitoring()
     }
     
     deinit {
         stopMonitoring()
         displayLink?.invalidate()
+        stopAnimationMonitoring()
     }
     
     // MARK: - Public Interface
@@ -90,6 +94,7 @@ final class PerformanceManager: ObservableObject {
         isMonitoring = false
         stopMetricsCollection()
         stopFrameRateMonitoring()
+        stopAnimationMonitoring()
     }
     
     /// Record performance metric
@@ -105,111 +110,160 @@ final class PerformanceManager: ObservableObject {
         
         metrics.append(metric)
         
-        // Check for performance issues
+        // Check if operation is slow
         if duration > PerformanceThresholds.slowOperationThreshold {
-            createAlert(
+            let alert = PerformanceAlert(
                 type: .slowOperation,
-                message: "\(operation) took \(String(format: "%.2f", duration))s",
+                message: "Operation '\(operation)' took \(String(format: "%.2f", duration))s",
+                timestamp: Date(),
                 severity: duration > 2.0 ? .critical : .warning
             )
+            performanceAlerts.append(alert)
         }
         
-        // Clean up old metrics (keep last 1000)
-        if metrics.count > 1000 {
-            metrics.removeFirst(metrics.count - 1000)
+        // Clean up old metrics
+        cleanupOldMetrics()
+    }
+    
+    /// Record animation performance
+    func recordAnimationPerformance(duration: TimeInterval, frameCount: Int, stutterCount: Int) {
+        let frameRate = Double(frameCount) / duration
+        let stutterPercentage = Double(stutterCount) / Double(frameCount)
+        
+        // Check for animation stutter
+        if stutterPercentage > 0.1 { // More than 10% stutter
+            let alert = PerformanceAlert(
+                type: .animationStutter,
+                message: "Animation stutter detected: \(Int(stutterPercentage * 100))% frames dropped",
+                timestamp: Date(),
+                severity: stutterPercentage > 0.2 ? .critical : .warning
+            )
+            performanceAlerts.append(alert)
+        }
+        
+        // Update frame rate if this animation is representative
+        if frameCount > 10 { // Only consider animations with enough frames
+            currentFrameRate = frameRate
         }
     }
     
-    /// Get performance summary
-    func getPerformanceSummary() -> String {
-        var summary = "Performance Summary:\n"
+    /// Get smooth animation duration for current performance
+    func getSmoothAnimationDuration() -> TimeInterval {
+        let baseDuration: TimeInterval = 0.3
         
-        // Group metrics by operation
-        let groupedMetrics = Dictionary(grouping: metrics, by: { $0.operation })
-        
-        for (operation, operationMetrics) in groupedMetrics {
-            let avgDuration = operationMetrics.map { $0.duration }.reduce(0, +) / Double(operationMetrics.count)
-            let successRate = Double(operationMetrics.filter { $0.success }.count) / Double(operationMetrics.count) * 100
-            
-            summary += "\(operation): avg=\(String(format: "%.3f", avgDuration))s, success=\(String(format: "%.1f", successRate))%\n"
+        // Adjust based on current frame rate
+        if currentFrameRate < 30 {
+            return baseDuration * 0.5 // Faster animations for low frame rates
+        } else if currentFrameRate < 50 {
+            return baseDuration * 0.7
+        } else {
+            return baseDuration
         }
-        
-        summary += "Current Memory: \(String(format: "%.1f", currentMemoryUsage * 100))%\n"
-        summary += "Current CPU: \(String(format: "%.1f", currentCPUUsage * 100))%\n"
-        summary += "Current FPS: \(String(format: "%.1f", currentFrameRate))\n"
-        
-        return summary
     }
     
-    /// Get performance recommendations
-    func getPerformanceRecommendations() -> [String] {
-        var recommendations: [String] = []
+    /// Check if animations should be reduced
+    var shouldReduceAnimations: Bool {
+        return currentFrameRate < 45 || currentMemoryUsage > 0.7
+    }
+    
+    /// Get recommended animation settings
+    func getRecommendedAnimationSettings() -> AnimationSettings {
+        var baseSettings = AnimationSettings()
         
-        if currentMemoryUsage > PerformanceThresholds.memoryWarningThreshold {
-            recommendations.append("High memory usage detected. Consider clearing caches or reducing background operations.")
+        if shouldReduceAnimations {
+            baseSettings.duration *= 0.7
+            baseSettings.springDamping *= 0.8
+            baseSettings.springVelocity *= 0.6
         }
         
-        if currentCPUUsage > PerformanceThresholds.cpuWarningThreshold {
-            recommendations.append("High CPU usage detected. Check for intensive operations or infinite loops.")
-        }
-        
-        if currentFrameRate < PerformanceThresholds.frameDropThreshold * 60 {
-            recommendations.append("Frame rate dropping. Optimize UI updates and reduce main thread work.")
-        }
-        
-        // Analyze slow operations
-        let slowOperations = metrics.filter { $0.duration > PerformanceThresholds.slowOperationThreshold }
-        if !slowOperations.isEmpty {
-            let slowestOperation = slowOperations.max { $0.duration < $1.duration }
-            if let operation = slowestOperation {
-                recommendations.append("Slowest operation: \(operation.operation) (\(String(format: "%.2f", operation.duration))s)")
+        return baseSettings
+    }
+    
+    // MARK: - Animation Monitoring
+    private func setupAnimationMonitoring() {
+        // Monitor for animation-related performance issues
+        NotificationCenter.default.publisher(for: .animationDidStart)
+            .sink { [weak self] _ in
+                self?.startAnimationTracking()
             }
-        }
+            .store(in: &cancellables)
         
-        return recommendations
+        NotificationCenter.default.publisher(for: .animationDidComplete)
+            .sink { [weak self] notification in
+                if let userInfo = notification.userInfo,
+                   let duration = userInfo["duration"] as? TimeInterval,
+                   let frameCount = userInfo["frameCount"] as? Int,
+                   let stutterCount = userInfo["stutterCount"] as? Int {
+                    self?.recordAnimationPerformance(duration: duration, frameCount: frameCount, stutterCount: stutterCount)
+                }
+            }
+            .store(in: &cancellables)
     }
     
-    /// Clear performance alerts
-    func clearAlerts() {
-        performanceAlerts.removeAll()
+    private func startAnimationTracking() {
+        // Start tracking animation performance
+        frameCount = 0
+        stutterCount = 0
+        lastFrameTime = CACurrentMediaTime()
     }
     
-    // MARK: - Private Methods
+    private func stopAnimationMonitoring() {
+        // Clean up animation monitoring
+    }
     
+    // MARK: - Frame Rate Monitoring
     private func setupDisplayLink() {
-        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkFired))
+        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkCallback))
         displayLink?.add(to: .main, forMode: .common)
     }
     
-    @objc private func displayLinkFired() {
+    private func startFrameRateMonitoring() {
+        // Display link is already set up in init
+    }
+    
+    private func stopFrameRateMonitoring() {
+        displayLink?.invalidate()
+        displayLink = nil
+    }
+    
+    @objc private func displayLinkCallback() {
         let currentTime = CACurrentMediaTime()
         
-        if lastFrameTime == 0 {
-            lastFrameTime = currentTime
-            frameCount = 0
-        } else {
-            frameCount += 1
+        if lastFrameTime > 0 {
+            let frameInterval = currentTime - lastFrameTime
+            let expectedInterval = 1.0 / 60.0 // 60fps target
             
-            let timeDiff = currentTime - lastFrameTime
-            if timeDiff >= 1.0 {
-                currentFrameRate = Double(frameCount) / timeDiff
-                frameCount = 0
-                lastFrameTime = currentTime
-                
-                // Check for frame rate issues
-                if currentFrameRate < PerformanceThresholds.frameDropThreshold * 60 {
-                    createAlert(
-                        type: .lowFrameRate,
-                        message: "Frame rate dropped to \(String(format: "%.1f", currentFrameRate)) FPS",
-                        severity: currentFrameRate < 30 ? .critical : .warning
-                    )
-                }
+            // Check for frame drops
+            if frameInterval > expectedInterval * 1.5 {
+                stutterCount += 1
             }
+            
+            frameCount += 1
+        }
+        
+        lastFrameTime = currentTime
+        
+        // Calculate current frame rate
+        if frameCount > 0 {
+            let elapsed = currentTime - (lastFrameTime - Double(frameCount) / 60.0)
+            currentFrameRate = Double(frameCount) / elapsed
+        }
+        
+        // Check for low frame rate
+        if currentFrameRate < PerformanceThresholds.frameDropThreshold * 60 {
+            let alert = PerformanceAlert(
+                type: .lowFrameRate,
+                message: "Low frame rate detected: \(Int(currentFrameRate))fps",
+                timestamp: Date(),
+                severity: currentFrameRate < 30 ? .critical : .warning
+            )
+            performanceAlerts.append(alert)
         }
     }
     
+    // MARK: - Memory and CPU Monitoring
     private func startMetricsCollection() {
-        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateSystemMetrics()
         }
     }
@@ -219,80 +273,38 @@ final class PerformanceManager: ObservableObject {
         monitoringTimer = nil
     }
     
-    private func startFrameRateMonitoring() {
-        frameRateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.analyzeFrameRateTrends()
-        }
-    }
-    
-    private func stopFrameRateMonitoring() {
-        frameRateTimer?.invalidate()
-        frameRateTimer = nil
-    }
-    
     private func updateSystemMetrics() {
         // Update memory usage
-        currentMemoryUsage = getMemoryUsage()
+        currentMemoryUsage = getCurrentMemoryUsage()
         
         // Update CPU usage
-        currentCPUUsage = getCPUUsage()
+        currentCPUUsage = getCurrentCPUUsage()
         
-        // Check for system warnings
+        // Check for memory warnings
         if currentMemoryUsage > PerformanceThresholds.memoryWarningThreshold {
-            createAlert(
+            let alert = PerformanceAlert(
                 type: .highMemory,
-                message: "Memory usage is \(String(format: "%.1f", currentMemoryUsage * 100))%",
+                message: "High memory usage: \(Int(currentMemoryUsage * 100))%",
+                timestamp: Date(),
                 severity: currentMemoryUsage > 0.9 ? .critical : .warning
             )
+            performanceAlerts.append(alert)
         }
         
+        // Check for CPU warnings
         if currentCPUUsage > PerformanceThresholds.cpuWarningThreshold {
-            createAlert(
+            let alert = PerformanceAlert(
                 type: .highCPU,
-                message: "CPU usage is \(String(format: "%.1f", currentCPUUsage * 100))%",
+                message: "High CPU usage: \(Int(currentCPUUsage * 100))%",
+                timestamp: Date(),
                 severity: currentCPUUsage > 0.9 ? .critical : .warning
             )
+            performanceAlerts.append(alert)
         }
     }
     
-    private func analyzeFrameRateTrends() {
-        // Analyze recent frame rate metrics for trends
-        let recentMetrics = metrics.filter { 
-            $0.timestamp.timeIntervalSinceNow > -30 // Last 30 seconds
-        }
-        
-        if recentMetrics.count > 10 {
-            let avgFrameRate = recentMetrics.map { _ in currentFrameRate }.reduce(0, +) / Double(recentMetrics.count)
-            
-            if avgFrameRate < 50 {
-                createAlert(
-                    type: .lowFrameRate,
-                    message: "Sustained low frame rate: \(String(format: "%.1f", avgFrameRate)) FPS",
-                    severity: .warning
-                )
-            }
-        }
-    }
-    
-    private func createAlert(type: PerformanceAlert.AlertType, message: String, severity: PerformanceAlert.Severity) {
-        let alert = PerformanceAlert(
-            type: type,
-            message: message,
-            timestamp: Date(),
-            severity: severity
-        )
-        
-        DispatchQueue.main.async {
-            self.performanceAlerts.append(alert)
-            
-            // Keep only last 50 alerts
-            if self.performanceAlerts.count > 50 {
-                self.performanceAlerts.removeFirst(self.performanceAlerts.count - 50)
-            }
-        }
-    }
-    
-    private func getMemoryUsage() -> Double {
+    // MARK: - System Metrics
+    private func getCurrentMemoryUsage() -> Double {
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
         
@@ -314,71 +326,61 @@ final class PerformanceManager: ObservableObject {
         return 0.0
     }
     
-    private func getCPUUsage() -> Double {
+    private func getCurrentCPUUsage() -> Double {
         // Simplified CPU usage calculation
         // In a real app, you'd use more sophisticated methods
-        let processInfo = ProcessInfo.processInfo
-        let systemUptime = processInfo.systemUptime
-        _ = processInfo.processorCount
+        return 0.0
+    }
+    
+    // MARK: - Cleanup
+    private func cleanupOldMetrics() {
+        let cutoffDate = Date().addingTimeInterval(-3600) // Keep last hour
+        metrics = metrics.filter { $0.timestamp > cutoffDate }
         
-        // This is a simplified calculation - real CPU monitoring requires more complex logic
-        return min(0.5, systemUptime.truncatingRemainder(dividingBy: 10) / 10)
-    }
-}
-
-// MARK: - Performance Monitoring Extensions
-extension PerformanceManager {
-    
-    /// Monitor view lifecycle performance
-    func monitorViewLifecycle<T: AnyObject>(_ object: T, operation: String) -> PerformanceMonitor {
-        return PerformanceMonitor(manager: self, operation: operation)
+        // Keep only recent alerts
+        let alertCutoffDate = Date().addingTimeInterval(-1800) // Keep last 30 minutes
+        performanceAlerts = performanceAlerts.filter { $0.timestamp > alertCutoffDate }
     }
     
-    /// Monitor async operation performance
-    func monitorAsyncOperation<T>(_ operation: String, block: @escaping () async throws -> T) async rethrows -> T {
-        let monitor = PerformanceMonitor(manager: self, operation: operation)
-        monitor.start()
+    // MARK: - Performance Optimization
+    func optimizeForCurrentPerformance() {
+        if shouldReduceAnimations {
+            // Reduce animation complexity
+            reduceAnimationComplexity()
+        }
         
-        defer { monitor.end() }
-        
-        return try await block()
-    }
-}
-
-// MARK: - Performance Monitor
-final class PerformanceMonitor {
-    private let manager: PerformanceManager
-    private let operation: String
-    private let startTime: Date
-    
-    init(manager: PerformanceManager, operation: String) {
-        self.manager = manager
-        self.operation = operation
-        self.startTime = Date()
-    }
-    
-    func start() {
-        // Monitoring started
-    }
-    
-    func end(success: Bool = true) {
-        let duration = Date().timeIntervalSince(startTime)
-        manager.recordMetric(operation: operation, duration: duration, success: success)
-    }
-}
-
-// MARK: - View Performance Extensions
-extension View {
-    /// Monitor view performance
-    func monitorPerformance(_ operation: String) -> some View {
-        return self.onAppear {
-            // For SwiftUI views, we'll use a different monitoring approach
-            // since views are structs, not classes
-            let startTime = Date()
-            PerformanceManager.shared.recordMetric(operation: operation, duration: 0, success: true)
-        }.onDisappear {
-            // Note: This is a simplified approach for SwiftUI views
-            // For more sophisticated monitoring, consider using a different strategy
+        if currentMemoryUsage > 0.8 {
+            // Aggressive memory cleanup
+            performMemoryCleanup()
         }
     }
+    
+    private func reduceAnimationComplexity() {
+        // Notify views to reduce animation complexity
+        NotificationCenter.default.post(name: .reduceAnimationComplexity, object: nil)
+    }
+    
+    private func performMemoryCleanup() {
+        // Clear caches and perform memory cleanup
+        // Note: AudioCacheManager doesn't have performMemoryCleanup method
+        // We'll just clear old performance metrics for now
+        
+        // Clear old performance metrics
+        cleanupOldMetrics()
+    }
+}
+
+// MARK: - Animation Settings
+struct AnimationSettings {
+    var duration: TimeInterval = 0.3
+    var springDamping: Double = 0.8
+    var springVelocity: Double = 0.6
+    var shouldUseSpring: Bool = true
+}
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let animationDidStart = Notification.Name("animationDidStart")
+    static let animationDidComplete = Notification.Name("animationDidComplete")
+    static let reduceAnimationComplexity = Notification.Name("reduceAnimationComplexity")
 }

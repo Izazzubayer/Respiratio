@@ -14,4 +14,13 @@ import Foundation
 extension Notification.Name {
     /// Notification sent when user taps the same tab to exit current session
     static let exitToMainView = Notification.Name("exitToMainView")
+    
+    /// Notification sent when user switches to a different tab
+    static let tabDidChange = Notification.Name("tabDidChange")
+    
+    /// Notification sent when a meditation session starts
+    static let meditationSessionStarted = Notification.Name("meditationSessionStarted")
+    
+    /// Notification sent when a meditation session ends
+    static let meditationSessionEnded = Notification.Name("meditationSessionEnded")
 }

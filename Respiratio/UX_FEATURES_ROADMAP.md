@@ -30,7 +30,7 @@
 ### **5. Performance & Reliability**
 - **Fast App Launch**: Minimize startup time
 - **Smooth Animations**: 60fps transitions and interactions
-- **Offline Functionality**: Core features work without internet
+- **Offline Functionality**: All features work without internet
 - **Battery Optimization**: Efficient audio playback and background processing
 
 ### **6. Content & Variety**
